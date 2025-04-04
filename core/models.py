@@ -1,0 +1,86 @@
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+class User(AbstractUser):
+    is_doctor = models.BooleanField(default=False)
+    is_patient = models.BooleanField(default=False)
+
+class Doctor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    specialization = models.CharField(max_length=255)
+    phone = models.CharField(max_length=15, unique=True)
+    hospital = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Patient(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='patients')
+    name = models.CharField(max_length=255)
+    date_of_birth = models.DateField()
+    gender = models.CharField(max_length=20)
+    phone = models.CharField(max_length=15, unique=True)
+    address = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    password = models.CharField(max_length=100, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
+
+class Visit(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    date_of_visit = models.DateField()
+    diagnosis = models.TextField()
+    treatment_plan = models.TextField()
+    notes = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=[('draft', 'Draft'), ('approved', 'Approved')], default='draft')
+    approved_by = models.ForeignKey(Doctor, related_name='approved_visits', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Visit for {self.patient.name} on {self.date_of_visit}"
+
+class Test(models.Model):
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE)
+    test_name = models.CharField(max_length=255)
+    region = models.CharField(max_length=255, blank=True, null=True)
+    reason = models.TextField()
+    result = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.test_name
+
+class Medication(models.Model):
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE)
+    medication_name = models.CharField(max_length=255)
+    reason = models.TextField()
+    instructions = models.TextField()
+    missed_dose_instructions = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.medication_name
+
+class FileUpload(models.Model):
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE)
+    file_path = models.FileField(upload_to='uploads/')
+    description = models.TextField(blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"File for {self.visit}"
+
+class AIPrompt(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE)
+    prompt = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"AI Prompt for {self.patient.name} at {self.created_at}"
+
