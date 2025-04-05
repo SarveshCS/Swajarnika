@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-pills me-2"></i>My Medications</h2>
+        <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date Prescribed</th>
+                            <th>Medication</th>
+                            <th>Instructions</th>
+                            <th>Missed Dose Instructions</th>
+                            <th>Reason</th>
+                            <th>Doctor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medication in medications %}
+                        <tr>
+                            <td>{{ medication.visit.date_of_visit|date:"M d, Y" }}</td>
+                            <td>{{ medication.medication_name }}</td>
+                            <td>{{ medication.instructions }}</td>
+                            <td>{{ medication.missed_dose_instructions }}</td>
+                            <td>{{ medication.reason }}</td>
+                            <td>Dr. {{ medication.visit.doctor.name }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No medications found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

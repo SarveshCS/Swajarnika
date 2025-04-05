@@ -1,0 +1,175 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-calendar-plus me-2"></i>Add New Visit</h2>
+        <a href="{% url 'doctor_patient_detail' patient.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Patient
+        </a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Visit Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Visit Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Date of Visit</label>
+                            <input type="date" class="form-control" name="date_of_visit" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Diagnosis</label>
+                            <textarea class="form-control" name="diagnosis" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Treatment Plan</label>
+                            <textarea class="form-control" name="treatment_plan" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medications -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Medications</h3>
+                <button type="button" class="btn btn-success" onclick="addMedication()">
+                    <i class="fas fa-plus me-1"></i>Add Medication
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="medications-container"></div>
+            </div>
+        </div>
+
+        <!-- Tests -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Tests</h3>
+                <button type="button" class="btn btn-success" onclick="addTest()">
+                    <i class="fas fa-plus me-1"></i>Add Test
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="tests-container"></div>
+            </div>
+        </div>
+
+        <!-- Files -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Upload Files</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Files</label>
+                    <input type="file" class="form-control" name="files[]" multiple>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">File Description</label>
+                    <textarea class="form-control" name="file_description" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end mb-5">
+            <button type="button" class="btn btn-secondary me-2" onclick="history.back()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Visit</button>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+function addMedication() {
+    const container = document.getElementById('medications-container');
+    const index = container.children.length;
+    
+    const medicationHtml = `
+        <div class="medication-item border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Medication Name</label>
+                        <input type="text" class="form-control" name="medication_name[]" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" name="medication_reason[]" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Instructions</label>
+                        <textarea class="form-control" name="medication_instructions[]" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Missed Dose Instructions</label>
+                        <textarea class="form-control" name="medication_missed_instructions[]" rows="2" required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-trash me-1"></i>Remove
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', medicationHtml);
+}
+
+function addTest() {
+    const container = document.getElementById('tests-container');
+    const index = container.children.length;
+    
+    const testHtml = `
+        <div class="test-item border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Test Name</label>
+                        <input type="text" class="form-control" name="test_name[]" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Region</label>
+                        <input type="text" class="form-control" name="test_region[]">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" name="test_reason[]" rows="2" required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-trash me-1"></i>Remove
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', testHtml);
+}
+</script>
+{% endblock %}
+{% endblock %} 

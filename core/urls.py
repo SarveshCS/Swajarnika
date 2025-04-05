@@ -5,6 +5,7 @@ from .views import (
     PatientLoginView, PatientProfileView, LogoutView
     # Add other view imports here as needed.
 )
+from . import template_views
 
 urlpatterns = [
     path('doctors/register/', DoctorRegisterView.as_view(), name='doctor-register'),
@@ -16,5 +17,6 @@ urlpatterns = [
     path('files/', FileUploadView.as_view(), name='file-upload'),
     path('ai/interact/', AIInteractView.as_view(), name='ai-interact'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('patient/ai-chat/', template_views.patient_ai_chat, name='patient_ai_chat'),
     # Add endpoints for patient login, view medications, tests, and files as required.
 ]

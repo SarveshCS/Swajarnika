@@ -1,0 +1,172 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a href="{% url 'patient_dashboard' %}" class="nav-link active">
+                            <i class="fas fa-home me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="{% url 'patient_ai_chat' %}" class="nav-link">
+                            <i class="fas fa-robot me-2"></i>AI Health Assistant
+                        </a>
+                    </li>
+                    <!-- Add other navigation items here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="container mt-5">
+                <div class="row mb-4">
+                    <div class="col">
+                        <h2><i class="fas fa-columns me-2"></i>Patient Dashboard</h2>
+                        <p class="text-muted">Welcome, {{ user.patient.name }}</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Recent Visits Card -->
+                    <div class="col-md-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Visits</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Doctor</th>
+                                                <th>Diagnosis</th>
+                                                <th>Treatment Plan</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for visit in visits %}
+                                            <tr>
+                                                <td>{{ visit.date_of_visit|date:"M d, Y" }}</td>
+                                                <td>Dr. {{ visit.doctor.name }}</td>
+                                                <td>{{ visit.diagnosis|truncatechars:50 }}</td>
+                                                <td>{{ visit.treatment_plan|truncatechars:50 }}</td>
+                                                <td>
+                                                    <a href="{% url 'patient_visit_detail' visit.id %}" class="btn btn-sm btn-info">
+                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center">No visits recorded yet.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Medications Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h3 class="mb-0"><i class="fas fa-pills me-2"></i>Recent Medications</h3>
+                                <a href="{% url 'patient_medications' %}" class="btn btn-primary btn-sm">
+                                    View All
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for medication in recent_medications %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ medication.medication_name }}</h5>
+                                            <small>{{ medication.visit.date_of_visit|date:"M d, Y" }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ medication.instructions }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            Missed dose: {{ medication.missed_dose_instructions }}
+                                        </small>
+                                    </div>
+                                    {% empty %}
+                                    <div class="list-group-item text-center">
+                                        No medications prescribed yet.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Tests Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h3 class="mb-0"><i class="fas fa-vial me-2"></i>Recent Tests</h3>
+                                <a href="{% url 'patient_tests' %}" class="btn btn-primary btn-sm">
+                                    View All
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for test in recent_tests %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ test.test_name }}</h5>
+                                            <small>{{ test.visit.date_of_visit|date:"M d, Y" }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ test.reason }}</p>
+                                        {% if test.region %}
+                                        <small class="text-muted">Region: {{ test.region }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% empty %}
+                                    <div class="list-group-item text-center">
+                                        No tests ordered yet.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Health Assistant Card -->
+                    <div class="col-md-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0"><i class="fas fa-robot me-2"></i>AI Health Assistant</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Have questions about your health records or treatment? Chat with our AI assistant!</p>
+                                <a href="{% url 'patient_ai_chat' %}" class="btn btn-primary">
+                                    <i class="fas fa-comments me-1"></i>Start Chat
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Files Link -->
+                <div class="row mt-4">
+                    <div class="col">
+                        <a href="{% url 'patient_files' %}" class="btn btn-primary">
+                            <i class="fas fa-file-medical me-1"></i>View Files
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

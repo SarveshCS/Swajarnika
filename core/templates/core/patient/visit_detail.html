@@ -1,0 +1,147 @@
+{% extends 'core/base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-calendar-day me-2"></i>Visit Details</h2>
+        <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Visit Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="fas fa-info-circle me-2"></i>Visit Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ visit.date_of_visit|date:"F d, Y" }}</p>
+                    <p><strong>Doctor:</strong> Dr. {{ visit.doctor.name }}</p>
+                    <p><strong>Diagnosis:</strong></p>
+                    <div class="alert alert-info">{{ visit.diagnosis }}</div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Treatment Plan:</strong></p>
+                    <div class="alert alert-success">{{ visit.treatment_plan }}</div>
+                    {% if visit.notes %}
+                    <p><strong>Additional Notes:</strong></p>
+                    <div class="alert alert-warning">{{ visit.notes }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medications -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="fas fa-pills me-2"></i>Prescribed Medications</h3>
+        </div>
+        <div class="card-body">
+            {% if medications %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Medication</th>
+                            <th>Instructions</th>
+                            <th>Missed Dose Instructions</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medication in medications %}
+                        <tr>
+                            <td>{{ medication.medication_name }}</td>
+                            <td>{{ medication.instructions }}</td>
+                            <td>{{ medication.missed_dose_instructions }}</td>
+                            <td>{{ medication.reason }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center mb-0">No medications prescribed for this visit.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tests -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="fas fa-vial me-2"></i>Ordered Tests</h3>
+        </div>
+        <div class="card-body">
+            {% if tests %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Test Name</th>
+                            <th>Region</th>
+                            <th>Reason</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in tests %}
+                        <tr>
+                            <td>{{ test.test_name }}</td>
+                            <td>{{ test.region|default:"-" }}</td>
+                            <td>{{ test.reason }}</td>
+                            <td>{{ test.result|default:"Pending" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center mb-0">No tests ordered for this visit.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Files -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="fas fa-file-medical me-2"></i>Related Files</h3>
+        </div>
+        <div class="card-body">
+            {% if files %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>File Name</th>
+                            <th>Description</th>
+                            <th>Uploaded</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td>{{ file.file_path.name|filename }}</td>
+                            <td>{{ file.description|default:"-" }}</td>
+                            <td>{{ file.uploaded_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                <a href="{{ file.file_path.url }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center mb-0">No files uploaded for this visit.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
