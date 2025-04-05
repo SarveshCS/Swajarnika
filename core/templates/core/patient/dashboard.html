@@ -1,171 +1,583 @@
 {% extends 'core/base.html' %}
 
+{% block extra_css %}
+<style>
+    /* Import Google Fonts for improved typography */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    
+    /* Color Variables - Modern Bluish-Gray Theme */
+    :root {
+        --primary-color: #4f46e5;
+        --primary-hover: #4338ca;
+        --bg-color: #1f2937;
+        --container-bg: #111827;
+        --border-color: #374151;
+        --header-bg: #111827;
+        --text-primary: #f9fafb;
+        --text-secondary: #e5e7eb;
+        --text-muted: #9ca3af;
+        --input-bg: #1f2937;
+        --input-border: #4b5563;
+        --input-text: #f3f4f6;
+        --card-bg: #1f2937;
+        --card-header-bg: #111827;
+        --shadow-color: rgba(0, 0, 0, 0.4);
+        --status-online: #10b981;
+        --table-header-bg: #2d3748;
+        --header-height: 60px;
+        --footer-height: 0px;
+    }
+
+    /* Hide the base navbar */
+    .navbar.navbar-expand-lg.navbar-dark.bg-primary {
+        display: none !important;
+    }
+
+    /* Fixed page height to prevent scrolling */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    /* Override Bootstrap container */
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0 !important;
+    }
+
+    /* Remove margin since navbar is gone */
+    #content {
+        margin-top: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Container layout */
+    .dashboard-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Chat Header */
+    .dashboard-header {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background-color: var(--header-bg);
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: var(--header-height);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 100;
+    }
+
+    .dashboard-brand {
+        display: flex;
+        align-items: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    .dashboard-brand i {
+        margin-right: 0.5rem;
+        font-size: 1.3rem;
+    }
+    
+    .dashboard-brand:hover {
+        color: var(--text-primary);
+        opacity: 0.9;
+    }
+
+    .dashboard-title {
+        margin-left: 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        border-left: 1px solid var(--border-color);
+        padding-left: 1.5rem;
+    }
+    
+    .dashboard-title i {
+        margin-right: 0.5rem;
+    }
+
+    .dashboard-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Nav links for header */
+    .header-nav-links {
+        display: flex;
+        margin-left: auto;
+    }
+    
+    .header-nav-link {
+        color: var(--text-primary);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .header-nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+    
+    .header-nav-link i {
+        margin-right: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+        .header-nav-links {
+            display: none;
+        }
+    }
+
+    .header-button {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        cursor: pointer;
+        margin-left: 0.5rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    
+    .header-button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Main content area */
+    .dashboard-content {
+        padding: 0 3rem;
+        margin-top: var(--header-height);
+        height: calc(100vh - var(--header-height) - var(--footer-height));
+        overflow-y: auto;
+        background-color: var(--bg-color);
+    }
+
+    .dashboard-content::-webkit-scrollbar {
+        width: 0.25rem;
+    }
+    
+    .dashboard-content::-webkit-scrollbar-track {
+        background: var(--bg-color);
+    }
+    
+    .dashboard-content::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 0.25rem;
+    }
+
+    /* Welcome section */
+    .welcome-section {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .welcome-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+
+    /* Cards */
+    .dashboard-card {
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 4px var(--shadow-color);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1rem 1.5rem;
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-title i {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Table styling */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        background-color: var(--table-header-bg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    tr:hover td {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: var(--table-header-bg);
+        color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+        background-color: #3a4559;
+        color: var(--text-primary);
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .btn i {
+        margin-right: 0.375rem;
+    }
+
+    /* List groups */
+    .list-group {
+        border-radius: 0.375rem;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .list-group-item {
+        padding: 1rem;
+        background-color: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-group-item-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .list-group-item-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    /* Empty states */
+    .empty-state {
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    /* Dashboard grid layout */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-content {
+            padding: 0 1rem;
+        }
+    }
+
+    /* Hide footer */
+    .footer {
+        display: none !important;
+    }
+</style>
+{% endblock extra_css %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item mb-2">
-                        <a href="{% url 'patient_dashboard' %}" class="nav-link active">
-                            <i class="fas fa-home me-2"></i>Dashboard
+<div class="dashboard-container">
+    <!-- Dashboard Header (serving as navbar replacement) -->
+    <div class="dashboard-header">
+        <a href="/" class="dashboard-brand">
+            <i class="fas fa-hospital-user"></i>Healthcare Platform
+        </a>
+        <div class="dashboard-title">
+            <i class="fas fa-columns"></i> Patient Dashboard
+        </div>
+        
+        <!-- Navigation Links -->
+        <div class="header-nav-links">
+            <a class="header-nav-link" href="{% url 'patient_dashboard' %}">
+                <i class="fas fa-columns"></i> Dashboard
+            </a>
+            <a class="header-nav-link" href="{% url 'patient_medications' %}">
+                <i class="fas fa-pills"></i> Medications
+            </a>
+            <a class="header-nav-link" href="{% url 'patient_tests' %}">
+                <i class="fas fa-vial"></i> Tests
+            </a>
+            <a class="header-nav-link" href="{% url 'patient_files' %}">
+                <i class="fas fa-file-medical"></i> Files
+            </a>
+            <a class="header-nav-link" href="{% url 'patient_ai_chat' %}">
+                <i class="fas fa-robot"></i> AI Assistant
+            </a>
+        </div>
+        
+        <div class="dashboard-actions">
+            <!-- Patient name and info in the header -->
+            <span class="me-2 text-secondary" style="font-size: 0.8rem;">
+                <i class="fas fa-user-circle me-1"></i>
+                {{ user.patient.name }}
+            </span>
+            
+            <!-- Logout dropdown -->
+            <div class="dropdown" style="display: inline-block;">
+                <button class="header-button" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: var(--container-bg); border-color: var(--border-color);">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'logout' %}" style="color: var(--text-primary);">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
                         </a>
                     </li>
-                    <li class="nav-item mb-2">
-                        <a href="{% url 'patient_ai_chat' %}" class="nav-link">
-                            <i class="fas fa-robot me-2"></i>AI Health Assistant
-                        </a>
-                    </li>
-                    <!-- Add other navigation items here -->
                 </ul>
             </div>
         </div>
+    </div>
 
-        <!-- Main content -->
-        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="container mt-5">
-                <div class="row mb-4">
-                    <div class="col">
-                        <h2><i class="fas fa-columns me-2"></i>Patient Dashboard</h2>
-                        <p class="text-muted">Welcome, {{ user.patient.name }}</p>
-                    </div>
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome, {{ user.patient.name }}</h1>
+            <p class="welcome-subtitle">Here's an overview of your health information</p>
+        </div>
+        
+        <!-- Recent Visits Card -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-calendar-check"></i> Recent Visits
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Doctor</th>
+                                <th>Diagnosis</th>
+                                <th>Treatment Plan</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visit in visits %}
+                            <tr>
+                                <td>{{ visit.date_of_visit|date:"M d, Y" }}</td>
+                                <td>Dr. {{ visit.doctor.name }}</td>
+                                <td>{{ visit.diagnosis|truncatechars:50 }}</td>
+                                <td>{{ visit.treatment_plan|truncatechars:50 }}</td>
+                                <td>
+                                    <a href="{% url 'patient_visit_detail' visit.id %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i>View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-state">No visits recorded yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-
-                <div class="row">
-                    <!-- Recent Visits Card -->
-                    <div class="col-md-12 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Visits</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Doctor</th>
-                                                <th>Diagnosis</th>
-                                                <th>Treatment Plan</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for visit in visits %}
-                                            <tr>
-                                                <td>{{ visit.date_of_visit|date:"M d, Y" }}</td>
-                                                <td>Dr. {{ visit.doctor.name }}</td>
-                                                <td>{{ visit.diagnosis|truncatechars:50 }}</td>
-                                                <td>{{ visit.treatment_plan|truncatechars:50 }}</td>
-                                                <td>
-                                                    <a href="{% url 'patient_visit_detail' visit.id %}" class="btn btn-sm btn-info">
-                                                        <i class="fas fa-eye me-1"></i>View Details
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            {% empty %}
-                                            <tr>
-                                                <td colspan="5" class="text-center">No visits recorded yet.</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Medications Card -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h3 class="mb-0"><i class="fas fa-pills me-2"></i>Recent Medications</h3>
-                                <a href="{% url 'patient_medications' %}" class="btn btn-primary btn-sm">
-                                    View All
-                                </a>
-                            </div>
-                            <div class="card-body">
-                                <div class="list-group">
-                                    {% for medication in recent_medications %}
-                                    <div class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">{{ medication.medication_name }}</h5>
-                                            <small>{{ medication.visit.date_of_visit|date:"M d, Y" }}</small>
-                                        </div>
-                                        <p class="mb-1">{{ medication.instructions }}</p>
-                                        <small class="text-muted">
-                                            <i class="fas fa-exclamation-circle me-1"></i>
-                                            Missed dose: {{ medication.missed_dose_instructions }}
-                                        </small>
-                                    </div>
-                                    {% empty %}
-                                    <div class="list-group-item text-center">
-                                        No medications prescribed yet.
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Tests Card -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h3 class="mb-0"><i class="fas fa-vial me-2"></i>Recent Tests</h3>
-                                <a href="{% url 'patient_tests' %}" class="btn btn-primary btn-sm">
-                                    View All
-                                </a>
-                            </div>
-                            <div class="card-body">
-                                <div class="list-group">
-                                    {% for test in recent_tests %}
-                                    <div class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">{{ test.test_name }}</h5>
-                                            <small>{{ test.visit.date_of_visit|date:"M d, Y" }}</small>
-                                        </div>
-                                        <p class="mb-1">{{ test.reason }}</p>
-                                        {% if test.region %}
-                                        <small class="text-muted">Region: {{ test.region }}</small>
-                                        {% endif %}
-                                    </div>
-                                    {% empty %}
-                                    <div class="list-group-item text-center">
-                                        No tests ordered yet.
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AI Health Assistant Card -->
-                    <div class="col-md-12 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="mb-0"><i class="fas fa-robot me-2"></i>AI Health Assistant</h3>
-                            </div>
-                            <div class="card-body">
-                                <p>Have questions about your health records or treatment? Chat with our AI assistant!</p>
-                                <a href="{% url 'patient_ai_chat' %}" class="btn btn-primary">
-                                    <i class="fas fa-comments me-1"></i>Start Chat
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        
+        <!-- Medications and Tests Grid -->
+        <div class="dashboard-grid">
+            <!-- Medications Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-pills"></i> Recent Medications
+                    </h3>
+                    <a href="{% url 'patient_medications' %}" class="btn btn-primary btn-sm">
+                        View All
+                    </a>
                 </div>
-
-                <!-- Files Link -->
-                <div class="row mt-4">
-                    <div class="col">
-                        <a href="{% url 'patient_files' %}" class="btn btn-primary">
-                            <i class="fas fa-file-medical me-1"></i>View Files
-                        </a>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for medication in recent_medications %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="list-group-item-title">{{ medication.medication_name }}</h5>
+                                <small>{{ medication.visit.date_of_visit|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="list-group-item-subtitle">{{ medication.instructions }}</p>
+                            <small style="color: var(--text-muted);">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                Missed dose: {{ medication.missed_dose_instructions }}
+                            </small>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item empty-state">No medications prescribed yet.</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
+            
+            <!-- Tests Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-vial"></i> Recent Tests
+                    </h3>
+                    <a href="{% url 'patient_tests' %}" class="btn btn-primary btn-sm">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for test in recent_tests %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="list-group-item-title">{{ test.test_name }}</h5>
+                                <small>{{ test.visit.date_of_visit|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="list-group-item-subtitle">{{ test.reason }}</p>
+                            {% if test.region %}
+                            <small style="color: var(--text-muted);">Region: {{ test.region }}</small>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item empty-state">No tests ordered yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Health Assistant Card -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-robot"></i> AI Health Assistant
+                </h3>
+            </div>
+            <div class="card-body" style="text-align: center;">
+                <p style="margin-bottom: 1rem;">Have questions about your health records or treatment? Chat with our AI assistant!</p>
+                <a href="{% url 'patient_ai_chat' %}" class="btn btn-primary">
+                    <i class="fas fa-comments"></i>Start Chat
+                </a>
+            </div>
+        </div>
+
+        <!-- Files Link -->
+        <div style="margin: 1.5rem 0; text-align: center;">
+            <a href="{% url 'patient_files' %}" class="btn btn-secondary">
+                <i class="fas fa-file-medical"></i>View Medical Files
+            </a>
         </div>
     </div>
 </div>

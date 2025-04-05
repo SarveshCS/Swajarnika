@@ -37,6 +37,7 @@
         --table-header-bg: #2d3748;
         --navbar-height: 0px; /* Setting to 0 since we're hiding the navbar */
         --header-height: 60px; /* Our custom header height */
+        --footer-height: 120px; /* Height for input area and status */
         --typing-dot-color: #4f46e5;
     }
 
@@ -95,7 +96,9 @@
         left: 0;
         right: 0;
         background-color: var(--container-bg);
-        z-index: 50;
+        height: var(--footer-height);
+        z-index: 100;
+        border-top: 1px solid var(--border-color);
         padding: 0 15%;
     }
     
@@ -117,9 +120,10 @@
         display: flex;
         flex-direction: column;
         background-color: var(--bg-color);
-        height: calc(100vh - var(--header-height));
+        height: calc(100vh - var(--header-height) - var(--footer-height));
         margin-top: var(--header-height); /* Push content below fixed header */
         position: relative; /* For positioning sticky elements */
+        overflow-y: auto; /* Allow container to scroll */
     }
     
     @media (max-width: 1200px) {
@@ -143,12 +147,12 @@
         color: var(--text-primary);
         border-bottom: 1px solid var(--border-color);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: var(--header-height);
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         width: 100%;
-        height: var(--header-height);
         z-index: 100;
     }
 
@@ -250,7 +254,7 @@
         background-color: var(--bg-color);
         scrollbar-width: thin;
         scrollbar-color: var(--border-color) var(--bg-color);
-        max-height: calc(100vh - var(--header-height) - 120px); /* Subtract header, input, status heights */
+        max-height: calc(100vh - var(--header-height) - var(--footer-height));
     }
     
     .messages-area::-webkit-scrollbar {
@@ -762,6 +766,9 @@
 {% endblock content %}
 
 {% block extra_js %}
+<!-- Include the Marked.js library for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Get form and UI elements
@@ -770,6 +777,20 @@
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const typingIndicator = document.getElementById('typing-indicator');
+        
+        // Configure marked.js options
+        marked.setOptions({
+            renderer: new marked.Renderer(),
+            highlight: function(code, lang) {
+                return code; // Simple syntax highlighting
+            },
+            pedantic: false,
+            gfm: true,
+            breaks: true,
+            sanitize: false,
+            smartypants: false,
+            xhtml: false
+        });
         
         // Scroll to bottom of messages
         messagesArea.scrollTop = messagesArea.scrollHeight;
@@ -805,10 +826,7 @@
                 
                 // Get the current time for the message
                 const now = new Date();
-                const hours = now.getHours() % 12 || 12;
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-                const timeString = `${hours}:${minutes} ${ampm}`;
+                const timeString = now.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
                 
                 userMessageRow.innerHTML = `
                     <div class="message-bubble user-bubble">
@@ -833,51 +851,104 @@
                 messagesArea.appendChild(typingIndicator);
                 messagesArea.scrollTop = messagesArea.scrollHeight;
                 
-                // Submit the form in the background using fetch
-                const formData = new FormData(chatForm);
+                // Make a simple AJAX request
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                
                 fetch(window.location.href, {
                     method: 'POST',
                     body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
-                }).then(response => {
-                    // Wait a moment to simulate AI thinking
-                    setTimeout(() => {
-                        // Hide the typing indicator
-                        typingIndicator.style.display = 'none';
-                        
-                        // Reload the page to get the updated messages
-                        window.location.reload();
-                    }, 1500); // Adjust this delay as needed
-                }).catch(error => {
-                    // In case of error, notify the user and re-enable the input
-                    console.error('Error:', error);
+                })
+                .then(response => response.text())
+                .then(text => {
+                    console.log("Server response:", text);
                     
-                    // Hide the typing indicator
+                    // Hide typing indicator
                     typingIndicator.style.display = 'none';
                     
-                    // Create an error message
+                    try {
+                        const data = JSON.parse(text);
+                        
+                        if (data.success) {
+                            // Create AI response with markdown rendering
+                            const aiMessageRow = document.createElement('div');
+                            aiMessageRow.className = 'message-row ai-message';
+                            
+                            // Use marked.js to render markdown
+                            const renderedContent = marked.parse(data.message);
+                            
+                            aiMessageRow.innerHTML = `
+                                <div class="message-bubble ai-bubble">
+                                    <div class="message-content">${renderedContent}</div>
+                                    <div class="message-footer">
+                                        <div class="message-time">${timeString}</div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            messagesArea.appendChild(aiMessageRow);
+                        } else {
+                            // Create error message
+                            const errorMessageRow = document.createElement('div');
+                            errorMessageRow.className = 'message-row ai-message';
+                            errorMessageRow.innerHTML = `
+                                <div class="message-bubble ai-bubble">
+                                    <div class="message-content">Error: ${data.error || 'Unknown error'}</div>
+                                    <div class="message-footer">
+                                        <div class="message-time">${timeString}</div>
+                                    </div>
+                                </div>
+                            `;
+                            messagesArea.appendChild(errorMessageRow);
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse JSON:", e);
+                        
+                        // If server didn't respond with valid JSON
+                        const errorMessageRow = document.createElement('div');
+                        errorMessageRow.className = 'message-row ai-message';
+                        errorMessageRow.innerHTML = `
+                            <div class="message-bubble ai-bubble">
+                                <div class="message-content">Sorry, there was an error processing your request. The server response was not valid.</div>
+                                <div class="message-footer">
+                                    <div class="message-time">${timeString}</div>
+                                </div>
+                            </div>
+                        `;
+                        messagesArea.appendChild(errorMessageRow);
+                    }
+                    
+                    // Re-enable input
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    messageInput.focus();
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    typingIndicator.style.display = 'none';
+                    
+                    // Error message
                     const errorMessageRow = document.createElement('div');
                     errorMessageRow.className = 'message-row ai-message';
                     errorMessageRow.innerHTML = `
                         <div class="message-bubble ai-bubble">
-                            <div class="message-content">Sorry, there was an error processing your request. Please try again.</div>
+                            <div class="message-content">Sorry, there was a network error. Please try again.</div>
                             <div class="message-footer">
                                 <div class="message-time">${timeString}</div>
                             </div>
                         </div>
                     `;
-                    
-                    // Add the error message to the chat
                     messagesArea.appendChild(errorMessageRow);
                     
-                    // Re-enable the input field and button
                     messageInput.disabled = false;
                     sendButton.disabled = false;
                     messageInput.focus();
-                    
-                    // Scroll to the bottom
                     messagesArea.scrollTop = messagesArea.scrollHeight;
                 });
             }
@@ -897,6 +968,127 @@
         window.addEventListener('load', function() {
             if (messageInput && !messageInput.disabled) {
                 messageInput.focus();
+            }
+        });
+        
+        // Function to add CSS for better markdown styling
+        function addMarkdownStyles() {
+            const style = document.createElement('style');
+            style.innerHTML = `
+                /* Markdown styling for AI messages */
+                .ai-bubble .message-content h1,
+                .ai-bubble .message-content h2,
+                .ai-bubble .message-content h3,
+                .ai-bubble .message-content h4,
+                .ai-bubble .message-content h5,
+                .ai-bubble .message-content h6 {
+                    margin-top: 0.75rem;
+                    margin-bottom: 0.5rem;
+                    font-weight: 600;
+                    line-height: 1.2;
+                }
+                
+                .ai-bubble .message-content h1 { font-size: 1.5rem; }
+                .ai-bubble .message-content h2 { font-size: 1.3rem; }
+                .ai-bubble .message-content h3 { font-size: 1.1rem; }
+                .ai-bubble .message-content h4 { font-size: 1rem; }
+                
+                .ai-bubble .message-content p {
+                    margin-bottom: 0.75rem;
+                }
+                
+                .ai-bubble .message-content ul, 
+                .ai-bubble .message-content ol {
+                    margin: 0.5rem 0;
+                    padding-left: 1.5rem;
+                }
+                
+                .ai-bubble .message-content li {
+                    margin-bottom: 0.25rem;
+                }
+                
+                .ai-bubble .message-content code {
+                    background-color: var(--code-bg);
+                    padding: 0.2rem 0.4rem;
+                    border-radius: 0.25rem;
+                    font-family: monospace;
+                    font-size: 0.9rem;
+                }
+                
+                .ai-bubble .message-content pre {
+                    background-color: var(--code-bg);
+                    padding: 0.75rem;
+                    border-radius: 0.25rem;
+                    overflow-x: auto;
+                    margin: 0.75rem 0;
+                }
+                
+                .ai-bubble .message-content pre code {
+                    background-color: transparent;
+                    padding: 0;
+                    border-radius: 0;
+                }
+                
+                .ai-bubble .message-content a {
+                    color: #93c5fd;
+                    text-decoration: underline;
+                }
+                
+                .ai-bubble .message-content a:hover {
+                    text-decoration: none;
+                }
+                
+                .ai-bubble .message-content blockquote {
+                    border-left: 0.25rem solid var(--primary-color);
+                    padding: 0.25rem 0.75rem;
+                    margin: 0.75rem 0;
+                    background-color: rgba(79, 70, 229, 0.1);
+                }
+                
+                .ai-bubble .message-content table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin: 0.75rem 0;
+                    font-size: 0.9rem;
+                }
+                
+                .ai-bubble .message-content th,
+                .ai-bubble .message-content td {
+                    border: 1px solid var(--border-color);
+                    padding: 0.5rem 0.75rem;
+                }
+                
+                .ai-bubble .message-content th {
+                    background-color: var(--table-header-bg);
+                    font-weight: 600;
+                }
+                
+                /* Fix for paragraphs inside list items */
+                .ai-bubble .message-content li p {
+                    margin-bottom: 0.25rem;
+                }
+                
+                /* Fix for last paragraph in message */
+                .ai-bubble .message-content p:last-child {
+                    margin-bottom: 0;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Add markdown styles
+        addMarkdownStyles();
+        
+        // Apply markdown rendering to existing AI messages
+        document.querySelectorAll('.ai-bubble .message-content').forEach(content => {
+            const originalText = content.innerText;
+            if (originalText && !content.dataset.markdownProcessed) {
+                try {
+                    content.innerHTML = marked.parse(originalText);
+                    content.dataset.markdownProcessed = 'true';
+                } catch (e) {
+                    console.error('Failed to parse markdown for existing message:', e);
+                }
             }
         });
     });
