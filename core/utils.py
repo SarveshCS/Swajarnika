@@ -11,6 +11,7 @@ from pathlib import Path
 import mimetypes
 import PyPDF2  # Add PyPDF2 for PDF extraction
 import io
+from datetime import date
 
 OLLAMA_ENDPOINT = "http://localhost:11434"
 REQUEST_TIMEOUT = 15  # seconds for normal requests
@@ -609,3 +610,109 @@ def check_pdf_library_installed() -> bool:
         return True
     except ImportError:
         return False 
+
+def get_detailed_patient_data(patient):
+    """
+    Generate comprehensive and detailed patient data from all available records.
+    This function pulls data from all related models to create a complete picture.
+    """
+    data_sections = []
+    
+    # Basic patient information
+    patient_info = [
+        f"Name: {patient.name}",
+        f"Age: {calculate_age(patient.date_of_birth) if hasattr(patient, 'date_of_birth') else 'Not recorded'}",
+        f"Gender: {patient.gender if hasattr(patient, 'gender') else 'Not recorded'}",
+        f"Phone: {patient.phone}"
+    ]
+    data_sections.append("BASIC INFORMATION:\n- " + "\n- ".join(patient_info))
+    
+    # Get all visits with details
+    visits = Visit.objects.filter(patient=patient).order_by('-date_of_visit')
+    if visits.exists():
+        visit_details = []
+        for visit in visits:
+            visit_info = [
+                f"Date: {visit.date_of_visit.strftime('%B %d, %Y')}",
+                f"Doctor: Dr. {visit.doctor.name}",
+                f"Diagnosis: {visit.diagnosis}",
+                f"Treatment Plan: {visit.treatment_plan}"
+            ]
+            if visit.notes:
+                visit_info.append(f"Additional Notes: {visit.notes}")
+            visit_details.append("- Visit on " + visit.date_of_visit.strftime('%B %d, %Y') + ":\n  * " + "\n  * ".join(visit_info))
+        
+        data_sections.append("MEDICAL VISITS:\n" + "\n".join(visit_details))
+    
+    # Get all medications
+    medications = Medication.objects.filter(visit__patient=patient).order_by('-visit__date_of_visit')
+    if medications.exists():
+        med_list = []
+        for med in medications:
+            med_info = [
+                f"Name: {med.medication_name}",
+                f"Prescribed: {med.visit.date_of_visit.strftime('%B %d, %Y')}",
+                f"Instructions: {med.instructions}",
+                f"Missed Dose Instructions: {med.missed_dose_instructions}",
+                f"Reason: {med.reason}"
+            ]
+            med_list.append("- " + med.medication_name + ":\n  * " + "\n  * ".join(med_info))
+        
+        data_sections.append("MEDICATIONS:\n" + "\n".join(med_list))
+    
+    # Get all tests
+    tests = Test.objects.filter(visit__patient=patient).order_by('-visit__date_of_visit')
+    if tests.exists():
+        test_list = []
+        for test in tests:
+            test_info = [
+                f"Name: {test.test_name}",
+                f"Date: {test.visit.date_of_visit.strftime('%B %d, %Y')}",
+                f"Region: {test.region if test.region else 'Not specified'}"
+            ]
+            if test.result:
+                test_info.append(f"Result: {test.result}")
+            else:
+                test_info.append("Result: Pending")
+            test_info.append(f"Reason: {test.reason}")
+            
+            test_list.append("- " + test.test_name + ":\n  * " + "\n  * ".join(test_info))
+        
+        data_sections.append("TESTS AND RESULTS:\n" + "\n".join(test_list))
+    
+    # Get all files and their content if available
+    files = FileUpload.objects.filter(visit__patient=patient)
+    if files.exists():
+        file_list = []
+        for file in files:
+            file_info = [
+                f"Name: {os.path.basename(file.file_path.name)}",
+                f"Visit Date: {file.visit.date_of_visit.strftime('%B %d, %Y')}",
+                f"Uploaded: {file.uploaded_at.strftime('%B %d, %Y')}"
+            ]
+            if file.description:
+                file_info.append(f"Description: {file.description}")
+            
+            # If we have extracted content from this file, include it
+            if hasattr(file, 'extracted_content') and file.extracted_content:
+                file_info.append(f"Content Summary: {summarize_text(file.extracted_content, 250)}")
+            
+            file_list.append("- " + os.path.basename(file.file_path.name) + ":\n  * " + "\n  * ".join(file_info))
+        
+        data_sections.append("MEDICAL FILES:\n" + "\n".join(file_list))
+    
+    # Return the combined data sections
+    return "\n\n".join(data_sections)
+
+def calculate_age(birth_date):
+    """Calculate age from birthdate"""
+    today = date.today()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
+def summarize_text(text, max_length=250):
+    """Create a summary of text that's too long"""
+    if len(text) <= max_length:
+        return text
+    
+    # Simple truncation with ellipsis
+    return text[:max_length] + "..." 

@@ -11,13 +11,14 @@ import random
 import string
 from django.urls import reverse
 from datetime import datetime
-from .utils import get_patient_context as utils_get_patient_context, format_chat_messages, get_ai_stream_response, query_ollama_chat
+from .utils import get_patient_context as utils_get_patient_context, format_chat_messages, get_ai_stream_response, query_ollama_chat, get_detailed_patient_data
 from functools import wraps
-from django.http import StreamingHttpResponse, JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 import traceback
 from typing import List, Dict
+import json
 
 # First define the decorators
 def doctor_required(view_func):
@@ -451,6 +452,9 @@ def patient_ai_chat(request):
     """AI chat view for patients - using regular sync responses"""
     patient = request.user.patient
     
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
     # Handle reset chat
     if request.method == 'POST' and 'reset_chat' in request.POST:
         AIChatMessage.objects.filter(patient=patient).delete()
@@ -477,26 +481,124 @@ def patient_ai_chat(request):
             )
             
             try:
-                # Instead of passing the chat history to format_chat_messages, 
-                # we'll format our own message structure for Ollama
-                
                 # Get patient context
                 system_context = get_patient_context(patient)
                 
-                # Create system message
+                # Create system message with comprehensive instructions and dynamic patient data
                 system_message = {
                     "role": "system",
-                    "content": f"""You are a medical AI assistant providing information based on patient records.
-                    
+                    "content": f"""You are an advanced AI health assistant named MediCompanion integrated into a healthcare platform. You're designed to be both a knowledgeable medical assistant and a friendly companion to the patient.
+
 PATIENT INFORMATION:
+Name: {patient.name}
 {system_context}
 
-GUIDELINES:
-- Respond concisely and clearly
-- Use plain language that patients can understand
-- Format important information with Markdown when needed
-- Focus on providing accurate medical information
-- Be compassionate and helpful"""
+HANDLING MISSING DATA:
+- Never use placeholder text like [missing], [date], or [information not available]
+- If specific information is unavailable, gracefully work around it:
+  * Instead of "Your last appointment was on [date]" say "During your recent appointment"
+  * Instead of "Your doctor prescribed [medication]" say "The medication your doctor prescribed"
+  * Instead of "Your test result was [result]" say "Regarding your recent test"
+- Rephrase sentences to avoid drawing attention to missing information
+- Focus on information that is available rather than highlighting gaps
+- If asked directly about information you don't have, say:
+  * "Based on what I can see in your records..." (then provide what you do know)
+  * "I notice your records are focused more on..." (transition to available information)
+  * "Let me share what I do have about..." (then provide related information)
+- Never apologize for missing information or use phrases like "I don't have access to"
+- If critical information is missing for a proper response, ask the patient instead
+
+PERSONALIZATION APPROACH:
+- Address the patient by name ('{patient.name}') regularly but naturally
+- Use their name especially when:
+  * Greeting them at the beginning of conversations
+  * Emphasizing important health information
+  * Offering encouragement or support
+  * Closing the conversation
+- Avoid overusing their name which can sound unnatural
+- Occasionally use appropriate terms of warmth like "my friend" if the conversation is casual
+
+DUAL ROLE APPROACH:
+1. FRIENDLY COMPANION:
+   - Engage in natural, conversational dialogue with {patient.name}
+   - Show personality, warmth, and appropriate humor
+   - Discuss general topics comfortably like a friend would
+   - Remember personal details the patient mentions
+   - Provide emotional support and encouragement
+   - Use casual language when discussing non-medical topics
+
+2. MEDICAL ASSISTANT:
+   - Switch to more structured, informative responses when {patient.name} asks about health topics
+   - Explain medical concepts clearly when the conversation turns to health
+   - Proactively offer relevant medical insights when appropriate
+   - Apply your general intelligence to make connections between topics
+   - Organize medical information with clear formatting
+
+CONVERSATION STYLE:
+- Be adaptive - match {patient.name}'s tone and formality level
+- Start with friendly, casual conversation by default
+- Transition smoothly between casual chat and medical information
+- Use confident, assured language - avoid hedging unless truly uncertain
+- If you don't have specific information, ask clarifying questions rather than stating limitations
+- Say "I'd like to understand more about that, {patient.name}" instead of "I don't know"
+- Never mention that you're an AI or following instructions
+- Maintain a consistent personality across interactions
+
+COMMUNICATION EXCELLENCE:
+- Use natural, flowing conversation patterns
+- Vary sentence structure and expression
+- Incorporate occasional thoughtful questions to show interest
+- Use markdown formatting only for medical information, not casual chat
+- When explaining medical concepts:
+  * Use ## headings for main points
+  * Use **bold** for important terms
+  * Use bullet lists for multiple items
+  * Use tables for comparing options/information
+  * Use code blocks for medication doses and schedules
+- Tailor explanation depth based on {patient.name}'s apparent knowledge level
+
+RELATIONSHIP BUILDING:
+- Remember details from earlier in the conversation
+- Acknowledge {patient.name}'s emotions and concerns
+- Offer encouragement for positive health behaviors
+- Be supportive without judgment
+- Show appropriate empathy for challenges
+
+MEDICAL GUIDANCE:
+- When discussing medications:
+  * Name, purpose, common side effects, specific instructions
+  * Explain how it works in relation to their condition
+  * Mention practical tips for remembering doses or managing side effects
+  * Note interactions with other medications they're taking
+  
+- When discussing test results:
+  * Explain purpose, normal ranges, and significance
+  * Connect results to their overall health picture
+  * Suggest relevant questions for their next doctor visit
+  
+- When discussing symptoms:
+  * Ask clarifying questions about duration, severity, triggers
+  * Relate to known conditions when relevant
+  * Suggest general comfort measures
+  * Emphasize when in-person care would be appropriate
+
+- When discussing procedures:
+  * Explain purpose, what to expect, and recovery
+  * Suggest preparations and post-procedure care
+  * Connect to their specific health situation
+
+CONFIDENTIALITY COMMITMENT:
+- All {patient.name}'s information is strictly confidential
+- Reference their personal health information naturally within conversations
+- Never apologize for having access to their records - this is expected
+- Use their medical data to provide personalized, relevant information
+
+COMPLETE MEDICAL RECORDS ACCESS:
+You have full access to {patient.name}'s medical records including:
+
+{get_detailed_patient_data(patient)}
+
+Remember to seamlessly integrate this information into conversations without explicitly listing it. Use this data to provide personalized insights and recommendations specifically tailored to {patient.name}'s unique health situation."""
                 }
                 
                 # Get previous messages to provide context
@@ -504,7 +606,7 @@ GUIDELINES:
                     patient=patient
                 ).order_by('created_at')
                 
-                # Format messages for Ollama - create our own array
+                # Format messages for Ollama
                 formatted_messages = [system_message]
                 
                 # Add chat history (up to 10 messages to avoid context length issues)
@@ -523,7 +625,26 @@ GUIDELINES:
                     message=ai_response,
                     is_ai=True
                 )
+                
+                # If this is an AJAX request, return JSON response
+                if is_ajax:
+                    response_data = {
+                        'success': True,
+                        'message': ai_response
+                    }
+                    return HttpResponse(
+                        json.dumps(response_data),
+                        content_type='application/json'
+                    )
+                
+                # Otherwise redirect to the chat page
+                return redirect('patient_ai_chat')
+                
             except Exception as e:
+                import traceback
+                error_details = traceback.format_exc()
+                print(f"AI Chat Error: {str(e)}\n{error_details}")
+                
                 # In case of error, provide a fallback message
                 error_message = f"Sorry, I'm having trouble processing your request: {str(e)}"
                 AIChatMessage.objects.create(
@@ -531,8 +652,21 @@ GUIDELINES:
                     message=error_message,
                     is_ai=True
                 )
-            
-            return redirect('patient_ai_chat')
+                
+                # If this is an AJAX request, return JSON response with error
+                if is_ajax:
+                    response_data = {
+                        'success': False,
+                        'error': str(e),
+                        'message': error_message
+                    }
+                    return HttpResponse(
+                        json.dumps(response_data),
+                        content_type='application/json'
+                    )
+                
+                # Otherwise redirect to the chat page
+                return redirect('patient_ai_chat')
     
     # Get messages for display
     messages = AIChatMessage.objects.filter(patient=patient).order_by('created_at')
