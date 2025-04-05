@@ -5,6 +5,13 @@ class User(AbstractUser):
     is_doctor = models.BooleanField(default=False)
     is_patient = models.BooleanField(default=False)
 
+    def __str__(self):
+        if self.is_doctor:
+            return f"Doctor: {self.username}"
+        elif self.is_patient:
+            return f"Patient: {self.username}"
+        return self.username
+
 class Doctor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -83,4 +90,16 @@ class AIPrompt(models.Model):
 
     def __str__(self):
         return f"AI Prompt for {self.patient.name} at {self.created_at}"
+
+class AIChatMessage(models.Model):
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
+    message = models.TextField()
+    is_ai = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{'AI' if self.is_ai else 'Patient'} message at {self.created_at}"
 
