@@ -9,33 +9,22 @@ import os
 import base64
 from pathlib import Path
 import mimetypes
-import PyPDF2  # Add PyPDF2 for PDF extraction
+import PyPDF2
 import io
 from datetime import date
 
-OLLAMA_ENDPOINT = "http://localhost:11434"
+# Akash API configuration
+AKASH_API_ENDPOINT = "https://api.akash.chat/v1"
+# Should be moved to settings.py in production
+AKASH_API_KEY = "sk-kSOuRSNOgj1XmRUm6rk48A"
 REQUEST_TIMEOUT = 15  # seconds for normal requests
 DOCUMENT_TIMEOUT = 60  # seconds for document processing
 
-# List of vision models to try in priority order
-VISION_MODELS = [
-    "llava:latest",        # LLaVA is good for general vision tasks
-    "bakllava:latest",     # Alternative to LLaVA
-    "llava-phi3:latest",   # Phi-3 based model with vision capabilities
-    "moondream:latest",    # Smaller model, might be faster
-    "llama3-vision",       # Llama 3 with vision capabilities
-    "vision-pro:latest",   # Custom model with enhanced vision capabilities
-    "openhermes-vision",   # OpenHermes with vision capabilities
-    "mantis:latest",       # Mantis, if available
-    "cogvlm:latest",       # CogVLM, specialized for document understanding
-    "kosmos2:latest",      # Kosmos-2 model
-    "granite3.2-vision:latest" # The original model we were using
-]
 
 def get_patient_context(patient) -> str:
     """Generate comprehensive context from all available patient data including visits, tests, medications and files with document analysis"""
     context = f"""PATIENT INFORMATION:
-Name: {patient.user.get_full_name()}
+Name: {patient.user.get_full_name() if hasattr(patient.user, 'get_full_name') else patient.name}
 ID: {patient.id}
 Gender: {patient.gender}
 Blood Group: {patient.blood_group if hasattr(patient, 'blood_group') else 'Not recorded'}
@@ -46,10 +35,10 @@ Address: {patient.address if patient.address else 'Not recorded'}
 
     # Get all visits ordered by most recent first
     visits = Visit.objects.filter(patient=patient).order_by('-date_of_visit')
-    
+
     # Track all files to process them later
     all_files = []
-    
+
     if visits.exists():
         context += "\n\nMEDICAL HISTORY:\n"
         for i, visit in enumerate(visits):
@@ -57,19 +46,22 @@ Address: {patient.address if patient.address else 'Not recorded'}
             context += f"\nAttending Doctor: {visit.doctor.name if hasattr(visit.doctor, 'name') else visit.doctor.user.get_full_name()}"
             context += f"\nDiagnosis: {visit.diagnosis}"
             context += f"\nTreatment Plan: {visit.treatment_plan}"
-            
+
             if visit.notes:
                 context += f"\nAdditional Notes: {visit.notes}"
-                
+
             # Get medications for this visit
             medications = Medication.objects.filter(visit=visit)
             if medications.exists():
                 context += "\n\nPrescribed Medications:"
                 for med in medications:
-                    med_name = med.medication_name if hasattr(med, 'medication_name') else med.name
-                    dosage = med.dosage if hasattr(med, 'dosage') else 'Not specified'
-                    frequency = med.frequency if hasattr(med, 'frequency') else 'Not specified'
-                    
+                    med_name = med.medication_name if hasattr(
+                        med, 'medication_name') else med.name
+                    dosage = med.dosage if hasattr(
+                        med, 'dosage') else 'Not specified'
+                    frequency = med.frequency if hasattr(
+                        med, 'frequency') else 'Not specified'
+
                     context += f"\n- {med_name}"
                     if hasattr(med, 'dosage') and hasattr(med, 'frequency'):
                         context += f" ({dosage}, {frequency})"
@@ -79,7 +71,7 @@ Address: {patient.address if patient.address else 'Not recorded'}
                         context += f"\n  Instructions: {med.instructions}"
                     if hasattr(med, 'missed_dose_instructions') and med.missed_dose_instructions:
                         context += f"\n  Missed Dose: {med.missed_dose_instructions}"
-            
+
             # Get tests for this visit
             tests = Test.objects.filter(visit=visit)
             if tests.exists():
@@ -94,7 +86,7 @@ Address: {patient.address if patient.address else 'Not recorded'}
                         context += f"\n  Result: {test.result}"
                     else:
                         context += "\n  Result: Pending"
-            
+
             # Get files for this visit
             files = FileUpload.objects.filter(visit=visit)
             if files.exists():
@@ -107,7 +99,7 @@ Address: {patient.address if patient.address else 'Not recorded'}
                     context += f" (Uploaded: {file.uploaded_at.strftime('%Y-%m-%d')})"
                     # Add to all files for processing
                     all_files.append(file)
-                    
+
             # Add AI prompts if any
             prompts = AIPrompt.objects.filter(visit=visit)
             if prompts.exists():
@@ -117,24 +109,24 @@ Address: {patient.address if patient.address else 'Not recorded'}
                         context += f"\n- {prompt.prompt_text}"
                     elif hasattr(prompt, 'prompt') and prompt.prompt:
                         context += f"\n- {prompt.prompt}"
-    
+
     # Add summary information at the end
     context += "\n\nSUMMARY STATS:"
     context += f"\nTotal Visits: {visits.count()}"
     context += f"\nMost Recent Visit: {visits.first().date_of_visit if visits.exists() else 'None'}"
-    
+
     # Count unique conditions from diagnoses for a simple "conditions list"
     all_diagnoses = [v.diagnosis for v in visits]
     unique_conditions = set()
     for diag in all_diagnoses:
         for condition in diag.split(','):
             unique_conditions.add(condition.strip())
-    
+
     if unique_conditions:
         context += "\nRecorded Conditions:"
         for condition in unique_conditions:
             context += f"\n- {condition}"
-    
+
     # Process document contents if files exist
     if all_files:
         file_contents = get_file_contents(all_files)
@@ -149,75 +141,76 @@ Address: {patient.address if patient.address else 'Not recorded'}
                 context += f"\nVisit Date: {file_data['visit_date']}"
                 context += f"\nProcessed Using: {file_data['model_used']} (took {file_data['processing_time']})"
                 context += f"\n\nEXTRACTED CONTENT:\n{file_data['content']}"
-    
+
     return context
 
-def is_ollama_available() -> bool:
-    """Check if Ollama server is available"""
+
+def is_akash_available() -> bool:
+    """Check if Akash API is available"""
     try:
-        response = requests.get("http://localhost:11434/api/version", timeout=2)
+        response = requests.get(
+            f"{AKASH_API_ENDPOINT}/models",
+            headers={"Authorization": f"Bearer {AKASH_API_KEY}"},
+            timeout=2
+        )
         return response.status_code == 200
     except:
         return False
 
+
 def get_fallback_response(query: str) -> str:
-    """Generate a fallback response when Ollama is unavailable"""
-    # Static responses based on common keywords
-    keywords = {
-        "hello": "Hello! I'm your AI health assistant. Unfortunately, I'm currently in offline mode due to connection issues.",
-        "pain": "Pain management is important. Please consult your doctor for specific advice about pain. I'm currently offline.",
-        "medication": "Medication questions require specific attention. Please check with your healthcare provider. I'm currently offline.",
-        "symptoms": "Understanding symptoms is important. Consider consulting with your doctor. I'm currently offline.",
-        "help": "I'd like to help, but I'm operating in offline mode due to connection issues. Please try again later.",
-    }
-    
-    # Default response
-    response = "I apologize, but I'm currently offline due to connection issues with the AI server. Please try again later or contact support if this persists."
-    
-    # Check for keywords in query
-    query_lower = query.lower()
-    for keyword, resp in keywords.items():
-        if keyword in query_lower:
-            response = resp
-            break
-            
-    return response
+    """Generate a fallback response when API is unavailable"""
+    return "I apologize, but I'm currently experiencing technical difficulties. Please try again later."
+
 
 def get_ai_stream_response(messages: List[Dict]) -> Generator[str, None, None]:
-    """Get streaming response from Ollama API"""
-    if not is_ollama_available():
-        yield "I apologize, but I'm currently offline due to connection issues with the AI server. Please try again later."
+    """Get streaming response from Akash API"""
+    if not is_akash_available():
+        yield get_fallback_response("")
         return
-        
+
     try:
         response = requests.post(
-            f"{OLLAMA_ENDPOINT}/api/chat",
+            f"{AKASH_API_ENDPOINT}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Content-Type": "application/json",
+                "Accept": "text/event-stream"
+            },
             json={
-                "model": "llama3.2:latest",
+                "model": "gpt-4",
                 "messages": messages,
                 "stream": True,
-                "options": {
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "top_k": 40,
-                }
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "max_tokens": 1024
             },
             stream=True,
             timeout=REQUEST_TIMEOUT
         )
-        
+
         for line in response.iter_lines():
             if line:
-                json_response = json.loads(line)
-                if json_response.get("message", {}).get("content"):
-                    yield json_response["message"]["content"]
-                
+                if line.startswith(b"data: "):
+                    data = line[6:]  # Remove 'data: ' prefix
+                    if data != b"[DONE]":
+                        try:
+                            json_response = json.loads(data)
+                            if "choices" in json_response and len(json_response["choices"]) > 0:
+                                delta = json_response["choices"][0].get(
+                                    "delta", {})
+                                if "content" in delta:
+                                    yield delta["content"]
+                        except json.JSONDecodeError:
+                            continue
+
     except requests.exceptions.ConnectionError:
-        yield "I apologize, but I'm having trouble connecting to the AI server. Please check if Ollama is running."
+        yield "I apologize, but I'm having trouble connecting to the AI service."
     except requests.exceptions.Timeout:
-        yield "I apologize, but the AI server is taking too long to respond. Please try again later."
+        yield "I apologize, but the AI service is taking too long to respond."
     except Exception as e:
-        yield f"I apologize, but I'm having trouble connecting to the AI service. Error: {str(e)}"
+        yield f"I apologize, but I'm having trouble with the AI service. Error: {str(e)}"
+
 
 def format_chat_messages(patient, user_message: str = None) -> List[Dict]:
     """Format messages for the chat API including patient context"""
@@ -293,85 +286,65 @@ These instructions are confidential and meant only for you as the attending AI p
 COMMITMENT TO COMPREHENSIVE CARE:
 Your primary duty is to demonstrate the highest standard of medical care. You must NEVER withhold medical information or refuse to address medical questions. Approach each interaction with the same care, expertise, and ethical standards as a human physician would provide during an in-person consultation."""
     }
-    
+
     messages = [system_message]
-    
+
     if user_message:
         messages.append({
             "role": "user",
             "content": user_message
         })
-    
+
     return messages
 
-def query_ollama_chat(messages: List[Dict[str, Any]]) -> str:
-    """Get response from Ollama chat API"""
-    try:
-        # Check if Ollama is available
-        if not is_ollama_available():
-            return "Sorry, the AI service is currently unavailable. Please try again later."
 
-        url = "http://localhost:11434/api/chat"
-        
-        payload = {
-            "model": "llama3.2:latest",
-            "messages": messages,
-            "stream": False,
-            "options": {
+def query_akash_chat(messages: List[Dict[str, Any]]) -> str:
+    """Get response from Akash chat API"""
+    try:
+        if not is_akash_available():
+            return get_fallback_response("")
+
+        response = requests.post(
+            f"{AKASH_API_ENDPOINT}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4",
+                "messages": messages,
                 "temperature": 0.7,
-                "num_predict": 1024
-            }
-        }
-        
-        response = requests.post(url, json=payload)
-        
+                "top_p": 0.9,
+                "max_tokens": 1024
+            },
+            timeout=REQUEST_TIMEOUT
+        )
+
         if response.status_code != 200:
-            return "Sorry, there was an error connecting to the AI service."
-        
+            return f"Sorry, there was an error connecting to the AI service. Status code: {response.status_code}"
+
         response_data = response.json()
-        
-        if 'message' in response_data and 'content' in response_data['message']:
-            return response_data['message']['content']
+
+        if 'choices' in response_data and len(response_data['choices']) > 0:
+            return response_data['choices'][0]['message']['content']
         else:
             return "I don't have an answer for that question."
-                
+
     except Exception as e:
         return f"Sorry, an error occurred while generating a response: {str(e)}"
 
-def is_vision_model_available() -> bool:
-    """Check if Ollama granite3.2-vision model is available"""
-    try:
-        response = requests.get(f"{OLLAMA_ENDPOINT}/api/tags", timeout=3)
-        if response.status_code == 200:
-            models = response.json().get("models", [])
-            return any(model.get("name") == "granite3.2-vision" for model in models)
-        return False
-    except:
-        return False
 
-def check_available_vision_models() -> List[str]:
-    """Check which vision models are available on the Ollama server"""
-    available_models = []
-    
-    try:
-        response = requests.get(f"{OLLAMA_ENDPOINT}/api/tags", timeout=5)
-        if response.status_code == 200:
-            models_data = response.json().get("models", [])
-            model_names = [model["name"] for model in models_data]
-            
-            # Check which of our preferred models are available
-            for model in VISION_MODELS:
-                if model in model_names or any(m.startswith(model.split(":")[0]) for m in model_names):
-                    available_models.append(model)
-                    
-        return available_models
-    except:
-        return []
+def is_vision_available() -> bool:
+    """Check if vision capabilities are available"""
+    # Akash API handles vision models automatically
+    return True
+
 
 def get_best_vision_model() -> Optional[str]:
     """Get the best available vision model for document processing"""
-    available_models = check_available_vision_models()
-    return available_models[0] if available_models else None
+    # Akash API handles vision models automatically
+    return "gpt-4-vision-preview"
+
 
 def extract_text_from_pdf(pdf_path: str) -> Tuple[str, str]:
     """Extract text from a PDF file using PyPDF2"""
@@ -380,30 +353,31 @@ def extract_text_from_pdf(pdf_path: str) -> Tuple[str, str]:
         with open(pdf_path, 'rb') as pdf_file:
             # Create a PDF reader object
             pdf_reader = PyPDF2.PdfReader(pdf_file)
-            
+
             # Get the number of pages
             num_pages = len(pdf_reader.pages)
-            
+
             # Extract text from each page
             text = ""
             for page_num in range(num_pages):
                 # Get the page object
                 page = pdf_reader.pages[page_num]
-                
+
                 # Extract text from the page
                 page_text = page.extract_text()
-                
+
                 # Add a page marker and the extracted text
                 text += f"\n----- Page {page_num + 1} -----\n"
                 text += page_text
-                
+
             # If we didn't get any meaningful text, return an error
             if not text.strip() or len(text.strip()) < 50:
                 return f"PDF text extraction yielded insufficient text. The PDF may be scanned or contain images rather than text.", "PyPDF2_insufficient"
-                
+
             return text, "PyPDF2"
     except Exception as e:
         return f"Error extracting text from PDF: {str(e)}", "PyPDF2_failed"
+
 
 def extract_text_from_file(file_path: str) -> Tuple[str, str]:
     """
@@ -411,33 +385,36 @@ def extract_text_from_file(file_path: str) -> Tuple[str, str]:
     - PDF files: Use PyPDF2
     - Text files: Direct reading
     - Other files: Use vision model
-    
+
     Returns a tuple of (extracted_text, model_used)
     """
     # Get the absolute file path
-    full_path = os.path.join(settings.MEDIA_ROOT, file_path.replace('/media/', ''))
-    
+    full_path = os.path.join(
+        settings.MEDIA_ROOT, file_path.replace('/media/', ''))
+
     # Skip if file doesn't exist
     if not os.path.exists(full_path):
         return f"File not found at {full_path}", "none"
-    
+
     # Get file type
     file_type, _ = mimetypes.guess_type(full_path)
-    
+
     # If it's a PDF file, use PyPDF2
     if file_type == 'application/pdf' or file_path.lower().endswith('.pdf'):
         text, method = extract_text_from_pdf(full_path)
-        
+
         # If PyPDF2 failed or yielded insufficient text, try with vision model as fallback
         if method.endswith('_failed') or method.endswith('_insufficient'):
-            print(f"PyPDF2 extraction issue: {text}. Falling back to vision model.")
+            print(
+                f"PyPDF2 extraction issue: {text}. Falling back to vision model.")
             vision_model = get_best_vision_model()
             if vision_model:
                 # Fall back to vision AI for this PDF
-                fallback_text, fallback_method = extract_text_with_vision_model(full_path, file_type, vision_model)
+                fallback_text, fallback_method = extract_text_with_vision_model(
+                    full_path, file_type, vision_model)
                 return fallback_text, f"{method} -> {fallback_method}"
         return text, method
-    
+
     # If it's a text file, just read it directly
     if file_type and file_type.startswith('text/'):
         try:
@@ -452,13 +429,14 @@ def extract_text_from_file(file_path: str) -> Tuple[str, str]:
                 return f"Error reading text file: {str(e)}", "none"
         except Exception as e:
             return f"Error reading text file: {str(e)}", "none"
-    
+
     # For other file types (images, etc.), use vision model
     vision_model = get_best_vision_model()
     if not vision_model:
         return "No vision models available for document processing.", "none"
-    
+
     return extract_text_with_vision_model(full_path, file_type, vision_model)
+
 
 def extract_text_with_vision_model(file_path: str, file_type: Optional[str], vision_model: str) -> Tuple[str, str]:
     """Extract text from a file using vision AI model"""
@@ -467,14 +445,14 @@ def extract_text_with_vision_model(file_path: str, file_type: Optional[str], vis
         with open(file_path, 'rb') as file:
             file_content = file.read()
             base64_content = base64.b64encode(file_content).decode('utf-8')
-        
+
         # Format message for vision model
         messages = [
             {
                 "role": "user",
                 "content": [
                     {
-                        "type": "text", 
+                        "type": "text",
                         "text": "Extract and transcribe all the text content from this document, preserving the layout structure as much as possible. This is a medical document, so please pay attention to medical terminology and ensure accuracy."
                     },
                     {
@@ -486,28 +464,31 @@ def extract_text_with_vision_model(file_path: str, file_type: Optional[str], vis
                 ]
             }
         ]
-        
-        # Call Ollama API
+
+        # Call Akash API
         response = requests.post(
-            f"{OLLAMA_ENDPOINT}/api/chat",
-            json={
-                "model": vision_model,
-                "messages": messages,
-                "stream": False,
-                "options": {
-                    "temperature": 0.1
-                }
+            f"{AKASH_API_ENDPOINT}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Content-Type": "application/json"
             },
-            timeout=DOCUMENT_TIMEOUT  # Longer timeout for document processing
+            json={
+                "model": "gpt-4-vision-preview",
+                "messages": messages,
+                "max_tokens": 4096,
+                "temperature": 0.1
+            },
+            timeout=DOCUMENT_TIMEOUT
         )
-        
+
         if response.status_code == 200:
-            return response.json()["message"]["content"], vision_model
+            return response.json()["choices"][0]["message"]["content"], "gpt-4-vision"
         else:
-            return f"Failed to extract text: API responded with code {response.status_code}", f"{vision_model}_failed"
-            
+            return f"Failed to extract text: API responded with code {response.status_code}", "vision_failed"
+
     except Exception as e:
-        return f"Error extracting document text: {str(e)}", f"{vision_model}_error"
+        return f"Error extracting document text: {str(e)}", "vision_error"
+
 
 def analyze_document_file(file_upload) -> Dict[str, Any]:
     """Analyze a document file and return structured information about it"""
@@ -515,12 +496,12 @@ def analyze_document_file(file_upload) -> Dict[str, Any]:
     file_name = os.path.basename(file_upload.file_path.name)
     file_url = file_upload.file_path.url
     file_type, _ = mimetypes.guess_type(file_url)
-    
+
     # Extract text from the document
     start_time = time.time()
     extracted_text, model_used = extract_text_from_file(file_url)
     processing_time = time.time() - start_time
-    
+
     # Create a structured response
     return {
         "file_name": file_name,
@@ -535,34 +516,35 @@ def analyze_document_file(file_upload) -> Dict[str, Any]:
         "visit_date": file_upload.visit.date_of_visit.strftime('%Y-%m-%d') if file_upload.visit else "Unknown"
     }
 
+
 def get_file_contents(files):
     """Process a list of files and extract their text content"""
     file_contents = {}
-    
+
     # Store temporary messages about document reading
     reading_messages = {}
-    
+
     # First pass: create placeholders to show document reading status
     for file in files:
         file_name = os.path.basename(file.file_path.name)
         reading_messages[file_name] = f"Reading file: {file_name}... This may take a moment."
-    
+
     # Create or update a temporary message in the database
     if files and len(files) > 0:
         # Get the patient from the first file's visit
         patient = files[0].visit.patient
-        
+
         # Create a temporary message indicating document processing
         file_count = len(files)
         temp_message = f"I'm analyzing {file_count} document{'s' if file_count > 1 else ''}... This may take a moment."
-        
+
         # Check if there's already a temporary message
         temp_chat = AIChatMessage.objects.filter(
-            patient=patient, 
-            message__startswith="I'm analyzing", 
+            patient=patient,
+            message__startswith="I'm analyzing",
             is_ai=True
         ).order_by('-created_at').first()
-        
+
         if temp_chat:
             # Update existing message
             temp_chat.message = temp_message
@@ -574,34 +556,35 @@ def get_file_contents(files):
                 message=temp_message,
                 is_ai=True
             )
-    
+
     # Second pass: actually process each file
     for file in files:
         file_name = os.path.basename(file.file_path.name)
-        
+
         # Get detailed document analysis
         file_analysis = analyze_document_file(file)
-        
+
         # Save the extracted text and analysis
         file_contents[file_name] = file_analysis
-    
+
     # If we created a temporary message, update or delete it
     if files and len(files) > 0:
         # Get the patient from the first file's visit
         patient = files[0].visit.patient
-        
+
         # Find the temporary message
         temp_chat = AIChatMessage.objects.filter(
-            patient=patient, 
-            message__startswith="I'm analyzing", 
+            patient=patient,
+            message__startswith="I'm analyzing",
             is_ai=True
         ).order_by('-created_at').first()
-        
+
         if temp_chat:
             # Delete the temporary message - we'll include this info in the main context
             temp_chat.delete()
-    
-    return file_contents 
+
+    return file_contents
+
 
 def check_pdf_library_installed() -> bool:
     """Check if PyPDF2 is properly installed"""
@@ -609,7 +592,36 @@ def check_pdf_library_installed() -> bool:
         import PyPDF2
         return True
     except ImportError:
-        return False 
+        return False
+
+
+def get_patient_pdf_text(patient_id):
+    """Get combined text from all PDFs uploaded by patient"""
+    upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
+    if not os.path.exists(upload_dir):
+        return ""
+
+    pdf_texts = []
+
+    for filename in os.listdir(upload_dir):
+        if filename.lower().endswith('.pdf'):
+            pdf_path = os.path.join(upload_dir, filename)
+            text, _ = extract_text_from_pdf(pdf_path)
+            if text and not text.startswith("Error"):
+                pdf_texts.append(text)
+
+    return "\n\n".join(pdf_texts)
+
+
+def format_pdf_context(pdf_text):
+    """Format PDF text for AI context"""
+    if not pdf_text:
+        return ""
+    return f"""
+    Here is relevant information from the user's documents:
+    {pdf_text[:8000]}  # Limit to 8000 chars to avoid context overflow
+    """
+
 
 def get_detailed_patient_data(patient):
     """
@@ -617,7 +629,7 @@ def get_detailed_patient_data(patient):
     This function pulls data from all related models to create a complete picture.
     """
     data_sections = []
-    
+
     # Basic patient information
     patient_info = [
         f"Name: {patient.name}",
@@ -626,7 +638,7 @@ def get_detailed_patient_data(patient):
         f"Phone: {patient.phone}"
     ]
     data_sections.append("BASIC INFORMATION:\n- " + "\n- ".join(patient_info))
-    
+
     # Get all visits with details
     visits = Visit.objects.filter(patient=patient).order_by('-date_of_visit')
     if visits.exists():
@@ -640,12 +652,14 @@ def get_detailed_patient_data(patient):
             ]
             if visit.notes:
                 visit_info.append(f"Additional Notes: {visit.notes}")
-            visit_details.append("- Visit on " + visit.date_of_visit.strftime('%B %d, %Y') + ":\n  * " + "\n  * ".join(visit_info))
-        
+            visit_details.append("- Visit on " + visit.date_of_visit.strftime(
+                '%B %d, %Y') + ":\n  * " + "\n  * ".join(visit_info))
+
         data_sections.append("MEDICAL VISITS:\n" + "\n".join(visit_details))
-    
+
     # Get all medications
-    medications = Medication.objects.filter(visit__patient=patient).order_by('-visit__date_of_visit')
+    medications = Medication.objects.filter(
+        visit__patient=patient).order_by('-visit__date_of_visit')
     if medications.exists():
         med_list = []
         for med in medications:
@@ -656,12 +670,14 @@ def get_detailed_patient_data(patient):
                 f"Missed Dose Instructions: {med.missed_dose_instructions}",
                 f"Reason: {med.reason}"
             ]
-            med_list.append("- " + med.medication_name + ":\n  * " + "\n  * ".join(med_info))
-        
+            med_list.append("- " + med.medication_name +
+                            ":\n  * " + "\n  * ".join(med_info))
+
         data_sections.append("MEDICATIONS:\n" + "\n".join(med_list))
-    
+
     # Get all tests
-    tests = Test.objects.filter(visit__patient=patient).order_by('-visit__date_of_visit')
+    tests = Test.objects.filter(
+        visit__patient=patient).order_by('-visit__date_of_visit')
     if tests.exists():
         test_list = []
         for test in tests:
@@ -675,11 +691,12 @@ def get_detailed_patient_data(patient):
             else:
                 test_info.append("Result: Pending")
             test_info.append(f"Reason: {test.reason}")
-            
-            test_list.append("- " + test.test_name + ":\n  * " + "\n  * ".join(test_info))
-        
+
+            test_list.append("- " + test.test_name +
+                             ":\n  * " + "\n  * ".join(test_info))
+
         data_sections.append("TESTS AND RESULTS:\n" + "\n".join(test_list))
-    
+
     # Get all files and their content if available
     files = FileUpload.objects.filter(visit__patient=patient)
     if files.exists():
@@ -692,27 +709,17 @@ def get_detailed_patient_data(patient):
             ]
             if file.description:
                 file_info.append(f"Description: {file.description}")
-            
-            # If we have extracted content from this file, include it
-            if hasattr(file, 'extracted_content') and file.extracted_content:
-                file_info.append(f"Content Summary: {summarize_text(file.extracted_content, 250)}")
-            
-            file_list.append("- " + os.path.basename(file.file_path.name) + ":\n  * " + "\n  * ".join(file_info))
-        
+
+            file_list.append(
+                "- " + os.path.basename(file.file_path.name) + ":\n  * " + "\n  * ".join(file_info))
+
         data_sections.append("MEDICAL FILES:\n" + "\n".join(file_list))
-    
+
     # Return the combined data sections
     return "\n\n".join(data_sections)
+
 
 def calculate_age(birth_date):
     """Calculate age from birthdate"""
     today = date.today()
     return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-
-def summarize_text(text, max_length=250):
-    """Create a summary of text that's too long"""
-    if len(text) <= max_length:
-        return text
-    
-    # Simple truncation with ellipsis
-    return text[:max_length] + "..." 

@@ -7,4 +7,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')),  # API endpoints
     path('', include('core.template_urls')),  # Template views
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
