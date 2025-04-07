@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <section class="hero-section text-center py-5 bg-light">
+        <h1 class="display-4">Welcome to Swajarnika</h1>
+        <p class="lead">Revolutionizing healthcare through technology and integrity</p>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section py-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>What is Swajarnika?</h2>
+                <p>Swajarnika is a comprehensive healthcare platform designed to bridge the gap between patients and healthcare providers. Our mission is to enhance medical integrity and improve patient outcomes through innovative technology solutions.</p>
+            </div>
+            <div class="col-md-6">
+                <img src="https://via.placeholder.com/500x300" alt="Healthcare illustration" class="img-fluid rounded">
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section py-5 bg-light">
+        <h2 class="text-center mb-5">How We Help Patients</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Secure Medical Records</h5>
+                        <p class="card-text">Your health data is protected with advanced encryption and blockchain technology.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">24/7 Access</h5>
+                        <p class="card-text">Access your medical information anytime, anywhere through our secure portal.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">AI Assistance</h5>
+                        <p class="card-text">Get instant answers to your health questions through our AI-powered chatbot.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section py-5">
+        <h2 class="text-center mb-5">Our Key Features</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Secure patient-doctor communication</li>
+                    <li class="list-group-item">Digital prescription management</li>
+                    <li class="list-group-item">Medical test result tracking</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Medication reminders</li>
+                    <li class="list-group-item">Appointment scheduling</li>
+                    <li class="list-group-item">Health analytics dashboard</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5 bg-primary text-white text-center">
+        <h2>Ready to experience better healthcare?</h2>
+        <div class="mt-4">
+            <a href="{% url 'patient_login' %}" class="btn btn-light btn-lg mx-2">Login</a>
+            <a href="{% url 'patient_register' %}" class="btn btn-outline-light btn-lg mx-2">Register</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

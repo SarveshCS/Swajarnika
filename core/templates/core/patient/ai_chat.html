@@ -3,288 +3,60 @@
 
 {% block extra_css %}
 <style>
-    /* Import Google Fonts for improved typography */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-    
-    /* Color Variables - Modern Bluish-Gray Theme */
-    :root {
-        --primary-color: #4f46e5;
-        --primary-hover: #4338ca;
-        --user-bubble-bg: #4f46e5;
-        --user-bubble-color: #f8fafc;
-        --ai-bubble-bg: #374151;
-        --ai-bubble-color: #f3f4f6;
-        --bg-color: #1f2937;
-        --container-bg: #111827;
-        --border-color: #374151;
-        --header-bg: #111827;
-        --text-primary: #f9fafb;
-        --text-secondary: #e5e7eb;
-        --text-muted: #9ca3af;
-        --input-bg: #1f2937;
-        --input-border: #4b5563;
-        --input-text: #f3f4f6;
-        --divider-bg: rgba(79, 70, 229, 0.1);
-        --divider-text: #9ca3af;
-        --shadow-color: rgba(0, 0, 0, 0.4);
-        --status-online: #10b981;
-        --status-offline: #ef4444;
-        --footer-text: #d1d5db;
-        --code-bg: #2d3748;
-        --blockquote-bg: #2d3748;
-        --blockquote-border: #4f46e5;
-        --table-border: #374151;
-        --table-header-bg: #2d3748;
-        --navbar-height: 0px; /* Setting to 0 since we're hiding the navbar */
-        --header-height: 60px; /* Our custom header height */
-        --footer-height: 120px; /* Height for input area and status */
-        --typing-dot-color: #4f46e5;
-    }
-
-    /* Hide the base navbar */
-    .navbar.navbar-expand-lg.navbar-dark.bg-primary {
-        display: none !important;
-    }
-
-    /* Fixed page height to prevent scrolling */
-    html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-color);
-        color: var(--text-primary);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        overflow: hidden;
-    }
-
-    /* Override Bootstrap container */
-    .container {
-        max-width: 100% !important;
-        padding: 0 !important;
-        height: 100vh; /* Use full height since navbar is hidden */
-        overflow: hidden;
-        margin: 0 !important;
-    }
-
-    /* Remove margin since navbar is gone */
-    #content {
-        margin-top: 0; /* No navbar to account for */
-        height: 100vh; /* Use full viewport height */
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    /* Chat container layout */
     .chat-container {
-        width: 100%;
-        max-width: 100%;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         height: 100vh;
-        overflow: hidden; /* Prevent outer container from scrolling */
-    }
-    
-    /* Footer container for input and status */
-    .chat-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: var(--container-bg);
-        height: var(--footer-height);
-        z-index: 100;
-        border-top: 1px solid var(--border-color);
-        padding: 0 15%;
-    }
-    
-    @media (max-width: 1200px) {
-        .chat-footer {
-            padding: 0 10%;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .chat-footer {
-            padding: 0 5%;
-        }
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
-    /* Messages container with padding */
     .messages-container {
-        padding: 0 15%;
         display: flex;
         flex-direction: column;
-        background-color: var(--bg-color);
-        height: calc(100vh - var(--header-height));
-        margin-top: var(--header-height); /* Push content below fixed header */
-        position: relative; /* For positioning sticky elements */
-        overflow-y: auto; /* Allow container to scroll */
-    }
-    
-    @media (max-width: 1200px) {
-        .messages-container {
-            padding: 0 10%;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .messages-container {
-            padding: 0 5%;
-        }
+        flex-grow: 1;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin: 1rem;
     }
 
-    /* Chat Header */
     .chat-header {
         display: flex;
         align-items: center;
-        padding: 0.75rem 1.5rem;
-        background-color: var(--header-bg);
-        color: var(--text-primary);
-        border-bottom: 1px solid var(--border-color);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        height: var(--header-height);
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        z-index: 100;
-    }
-
-    .chat-brand {
-        display: flex;
-        align-items: center;
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-decoration: none;
-    }
-    
-    .chat-brand i {
-        margin-right: 0.5rem;
-        font-size: 1.3rem;
-    }
-    
-    .chat-brand:hover {
-        color: var(--text-primary);
-        opacity: 0.9;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        background-color: #fff;
+        border-bottom: 1px solid #e9ecef;
     }
 
     .chat-title {
-        margin-left: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 600;
-        font-size: 0.95rem;
+        color: #212529;
         display: flex;
         align-items: center;
-        border-left: 1px solid var(--border-color);
-        padding-left: 1.5rem;
-    }
-    
-    .chat-title i {
-        margin-right: 0.5rem;
+        gap: 0.5rem;
     }
 
     .chat-actions {
-        margin-left: auto;
         display: flex;
-        align-items: center;
-    }
-    
-    .header-button {
-        background: none;
-        border: none;
-        color: var(--text-primary);
-        cursor: pointer;
-        margin-left: 0.5rem;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-    
-    .header-button:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        gap: 0.5rem;
     }
 
-    /* Nav links for header */
-    .header-nav-links {
-        display: flex;
-        margin-left: auto;
-    }
-    
-    .header-nav-link {
-        color: var(--text-primary);
-        text-decoration: none;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8rem;
-        border-radius: 0.25rem;
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-    }
-    
-    .header-nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: var(--text-primary);
-    }
-    
-    .header-nav-link i {
-        margin-right: 0.25rem;
-    }
-    
-    @media (max-width: 768px) {
-        .header-nav-links {
-            display: none;
-        }
-    }
-
-    /* Messages Area */
-    .messages-area {
-        flex: 1;
+    .chat-messages {
+        flex-grow: 1;
         overflow-y: auto;
-        padding: 1rem;
-        background-color: var(--bg-color);
-        scrollbar-width: thin;
-        scrollbar-color: var(--border-color) var(--bg-color);
-        max-height: calc(100vh - var(--header-height) - var(--footer-height));
-    }
-    
-    .messages-area::-webkit-scrollbar {
-        width: 0.25rem;
-    }
-    
-    .messages-area::-webkit-scrollbar-track {
-        background: var(--bg-color);
-    }
-    
-    .messages-area::-webkit-scrollbar-thumb {
-        background-color: var(--border-color);
-        border-radius: 0.25rem;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
-    /* Message Styles */
     .message-row {
         display: flex;
-        width: 100%;
-        margin-bottom: 0.75rem;
-        opacity: 0;
-        transform: translateY(0.25rem);
-        animation: message-appear 0.3s forwards;
-    }
-    
-    @keyframes message-appear {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        margin-bottom: 1rem;
     }
 
     .user-message {
@@ -296,801 +68,588 @@
     }
 
     .message-bubble {
-        max-width: 75%;
+        max-width: 80%;
         padding: 0.75rem 1rem;
-        border-radius: 0.75rem;
-        position: relative;
-        box-shadow: 0 1px 2px var(--shadow-color);
+        border-radius: 18px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     .user-bubble {
-        background-color: var(--user-bubble-bg);
-        color: var(--user-bubble-color);
-        border-bottom-right-radius: 0.25rem;
+        background-color: #007bff;
+        color: white;
+        border-bottom-right-radius: 4px;
     }
 
     .ai-bubble {
-        background-color: var(--ai-bubble-bg);
-        color: var(--ai-bubble-color);
-        border-bottom-left-radius: 0.25rem;
+        background-color: white;
+        color: #212529;
+        border-bottom-left-radius: 4px;
     }
 
-    /* Markdown styling for messages */
     .message-content {
         font-size: 0.95rem;
         line-height: 1.5;
-        word-wrap: break-word;
-    }
-    
-    .message-content p {
-        margin-top: 0;
-        margin-bottom: 0.75rem;
-    }
-    
-    .message-content p:last-child {
-        margin-bottom: 0;
-    }
-    
-    .message-content h1, 
-    .message-content h2, 
-    .message-content h3 {
-        margin-top: 0.75rem;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-    }
-    
-    .message-content h1 {
-        font-size: 1.3rem;
-    }
-    
-    .message-content h2 {
-        font-size: 1.2rem;
-    }
-    
-    .message-content h3 {
-        font-size: 1.1rem;
-    }
-    
-    .message-content ul, 
-    .message-content ol {
-        margin: 0.5rem 0;
-        padding-left: 1.5rem;
-    }
-    
-    .message-content li {
-        margin-bottom: 0.25rem;
-    }
-    
-    .message-content code {
-        background-color: var(--code-bg);
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
-        font-family: monospace;
-        font-size: 0.9rem;
-    }
-    
-    .message-content pre {
-        background-color: var(--code-bg);
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-        overflow-x: auto;
-        margin: 0.75rem 0;
-        font-size: 0.9rem;
-    }
-    
-    .message-content blockquote {
-        border-left: 0.25rem solid var(--blockquote-border);
-        padding: 0.25rem 0.75rem;
-        margin: 0.75rem 0;
-        background-color: var(--blockquote-bg);
-    }
-    
-    .message-content table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 0.75rem 0;
-        font-size: 0.9rem;
-    }
-    
-    .message-content th,
-    .message-content td {
-        border: 1px solid var(--table-border);
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .message-content th {
-        background-color: var(--table-header-bg);
-        font-weight: 600;
+        white-space: pre-wrap;
     }
 
     .message-footer {
         display: flex;
         justify-content: flex-end;
-        align-items: center;
-        margin-top: 0.5rem;
-        font-size: 0.7rem;
-        color: rgba(255, 255, 255, 0.5);
+        margin-top: 0.25rem;
     }
 
     .message-time {
-        margin-right: 0.25rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
     }
 
-    /* Input Area */
+    .ai-bubble .message-time {
+        color: #6c757d;
+    }
+
     .input-area {
-        padding: 1rem;
-        background-color: var(--container-bg);
-        border-top: 1px solid var(--border-color);
-        flex-shrink: 0;
-        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1rem 1.5rem;
+        background-color: white;
+        border-top: 1px solid #e9ecef;
     }
 
     .input-form {
         display: flex;
-        align-items: center;
+        gap: 0.5rem;
     }
 
     .message-input-container {
-        flex: 1;
-        background-color: var(--input-bg);
-        border-radius: 1.5rem;
-        padding: 0 1rem;
-        margin-right: 0.75rem;
-        display: flex;
-        align-items: center;
-        border: 1px solid var(--input-border);
-        height: 2.75rem;
-    }
-    
-    .message-input-container:focus-within {
-        border-color: var(--primary-color);
+        flex-grow: 1;
+        position: relative;
     }
 
     .message-input {
-        flex: 1;
-        border: none;
-        padding: 0.5rem 0.375rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 24px;
         font-size: 0.95rem;
         outline: none;
-        background: transparent;
-        color: var(--input-text);
+        transition: border-color 0.15s ease-in-out;
     }
 
-    .message-input:disabled {
-        color: var(--text-muted);
+    .message-input:focus {
+        border-color: #007bff;
     }
 
     .send-button {
-        width: 2.75rem;
-        height: 2.75rem;
-        border-radius: 50%;
-        background-color: var(--primary-color);
+        background-color: #007bff;
         color: white;
         border: none;
+        border-radius: 50%;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 1.1rem;
+        transition: background-color 0.15s ease-in-out;
     }
 
     .send-button:hover {
-        background-color: var(--primary-hover);
+        background-color: #0069d9;
     }
 
     .send-button:disabled {
-        background-color: rgba(79, 70, 229, 0.4);
+        background-color: #6c757d;
         cursor: not-allowed;
     }
 
-    /* Status Indicator */
-    .ollama-status {
-        text-align: center;
-        padding: 0.5rem;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        background-color: var(--header-bg);
-        border-top: 1px solid var(--border-color);
-        border-bottom-left-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
-    }
-
-    .status-online {
-        color: var(--status-online);
-        font-weight: 500;
-    }
-
-    .status-offline {
-        color: var(--status-offline);
-        font-weight: 500;
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1.5rem;
-        color: var(--text-secondary);
-    }
-    
-    .empty-state-icon {
-        font-size: 3rem;
-        color: var(--primary-color);
-        margin-bottom: 1.5rem;
-        opacity: 0.8;
-    }
-    
-    .empty-state-text {
-        font-size: 1.2rem;
-        margin-bottom: 0.75rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-    
-    .empty-state-subtext {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        max-width: 30rem;
-        margin: 0 auto;
-        line-height: 1.5;
-    }
-    
-    /* Date Divider */
-    .date-divider {
-        display: flex;
-        align-items: center;
-        margin: 0.75rem 0;
-        text-align: center;
-    }
-    
-    .date-divider::before,
-    .date-divider::after {
-        content: "";
-        flex: 1;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .date-divider-text {
-        padding: 0.125rem 0.5rem;
-        background-color: var(--divider-bg);
-        border-radius: 0.5rem;
-        font-size: 0.65rem;
-        color: var(--divider-text);
-        margin: 0 0.5rem;
-    }
-    
-    /* AI Typing Indicator */
     .typing-indicator {
         display: inline-flex;
         align-items: center;
-        padding: 0.5rem 0.75rem;
-        border-radius: 1rem;
-        background-color: var(--ai-bubble-bg);
-        margin-bottom: 0.75rem;
+        padding: 0.5rem 1rem;
+        background-color: white;
+        border-radius: 18px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
     }
-    
+
     .typing-dot {
-        width: 0.5rem;
-        height: 0.5rem;
+        width: 8px;
+        height: 8px;
+        background-color: #6c757d;
         border-radius: 50%;
-        background-color: var(--typing-dot-color);
-        margin: 0 0.2rem;
-        animation: typing-dot 1.4s infinite ease-in-out;
+        margin: 0 2px;
+        animation: typing-animation 1.4s infinite ease-in-out;
     }
-    
+
     .typing-dot:nth-child(1) {
         animation-delay: 0s;
     }
-    
+
     .typing-dot:nth-child(2) {
         animation-delay: 0.2s;
     }
-    
+
     .typing-dot:nth-child(3) {
         animation-delay: 0.4s;
     }
-    
-    @keyframes typing-dot {
-        0%, 60%, 100% {
+
+    @keyframes typing-animation {
+
+        0%,
+        60%,
+        100% {
             transform: translateY(0);
         }
+
         30% {
-            transform: translateY(-0.35rem);
+            transform: translateY(-5px);
         }
     }
-    
-    /* Hide footer */
-    .footer {
-        display: none !important;
+
+    .ollama-status {
+        display: flex;
+        justify-content: center;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        color: #6c757d;
     }
-    
-    @media (max-width: 768px) {
-        .chat-container {
-            width: 95%;
-        }
-        
-        #content {
-            padding: 0.5rem 0;
-        }
-        
-        .message-bubble {
-            max-width: 80%;
-        }
+
+    .status-online {
+        color: #28a745;
+    }
+
+    .status-offline {
+        color: #dc3545;
+    }
+
+    .status-online i,
+    .status-offline i {
+        font-size: 0.6rem;
+        margin-right: 0.25rem;
+    }
+
+    /* Markdown styling for AI responses */
+    .ai-bubble .message-content h1,
+    .ai-bubble .message-content h2,
+    .ai-bubble .message-content h3,
+    .ai-bubble .message-content h4,
+    .ai-bubble .message-content h5,
+    .ai-bubble .message-content h6 {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .ai-bubble .message-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .ai-bubble .message-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .ai-bubble .message-content h3 {
+        font-size: 1.2rem;
+    }
+
+    .ai-bubble .message-content h4 {
+        font-size: 1.1rem;
+    }
+
+    .ai-bubble .message-content h5 {
+        font-size: 1rem;
+    }
+
+    .ai-bubble .message-content h6 {
+        font-size: 0.9rem;
+    }
+
+    .ai-bubble .message-content p {
+        margin-bottom: 0.5rem;
+    }
+
+    .ai-bubble .message-content ul,
+    .ai-bubble .message-content ol {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding-left: 1.5rem;
+    }
+
+    .ai-bubble .message-content li {
+        margin-bottom: 0.25rem;
+    }
+
+    .ai-bubble .message-content code {
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.9em;
+    }
+
+    .ai-bubble .message-content pre {
+        background-color: #f8f9fa;
+        padding: 0.75rem;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 0.5rem 0;
+    }
+
+    .ai-bubble .message-content blockquote {
+        border-left: 3px solid #ced4da;
+        padding-left: 0.75rem;
+        color: #6c757d;
+        margin: 0.5rem 0;
+    }
+
+    .ai-bubble .message-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    .ai-bubble .message-content th,
+    .ai-bubble .message-content td {
+        border: 1px solid #ced4da;
+        padding: 0.5rem;
+        text-align: left;
+    }
+
+    .ai-bubble .message-content th {
+        background-color: #f8f9fa;
+    }
+
+    .ai-bubble .message-content a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .ai-bubble .message-content a:hover {
+        text-decoration: underline;
+    }
+
+    .ai-bubble .message-content strong {
+        font-weight: 600;
+    }
+
+    .ai-bubble .message-content em {
+        font-style: italic;
+    }
+
+    .file-upload-area {
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-upload-button {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .file-upload-button:hover {
+        background-color: #e9ecef;
+    }
+
+    .file-name {
+        font-size: 0.85rem;
+        color: #6c757d;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-clear {
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 0.85rem;
     }
 </style>
 {% endblock extra_css %}
 
 {% block content %}
 <div class="chat-container">
-    <!-- Chat Header (serving as navbar replacement) -->
-    <div class="chat-header">
-        <a href="/" class="chat-brand">
-            <i class="fas fa-hospital-user"></i>Healthcare Platform
-        </a>
-        <div class="chat-title">
-            <i class="fas fa-robot"></i> AI Health Assistant
-        </div>
-        
-        <!-- Navigation Links -->
-        <div class="header-nav-links">
-            <a class="header-nav-link" href="{% url 'patient_dashboard' %}">
-                <i class="fas fa-columns"></i> Dashboard
-            </a>
-            <a class="header-nav-link" href="{% url 'patient_medications' %}">
-                <i class="fas fa-pills"></i> Medications
-            </a>
-            <a class="header-nav-link" href="{% url 'patient_tests' %}">
-                <i class="fas fa-vial"></i> Tests
-            </a>
-            <a class="header-nav-link" href="{% url 'patient_files' %}">
-                <i class="fas fa-file-medical"></i> Files
-            </a>
-        </div>
-        
-        <div class="chat-actions">
-            <!-- Patient name and info in the header -->
-            <span class="me-2 text-secondary" style="font-size: 0.8rem;">
-                <i class="fas fa-user-circle me-1"></i>
-                {{ user.patient.name }}
-            </span>
-            
-            <form method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" name="reset_chat" value="true" class="header-button" 
-                        title="New Chat" 
-                        onclick="return confirm('Are you sure you want to start a new chat? This will clear your current conversation.');">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </form>
-            
-            <!-- Logout dropdown -->
-            <div class="dropdown" style="display: inline-block;">
-                <button class="header-button" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: var(--container-bg); border-color: var(--border-color);">
-                    <li>
-                        <a class="dropdown-item" href="{% url 'logout' %}" style="color: var(--text-primary);">
-                            <i class="fas fa-sign-out-alt me-1"></i> Logout
-                        </a>
-                    </li>
-                </ul>
+    <div class="messages-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-title">
+                <i class="fas fa-robot"></i> AI Health Assistant
+            </div>
+            <div class="chat-actions">
+                <form method="post" id="reset-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="reset_chat" value="true">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-redo-alt"></i> Reset Chat
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Messages Container with padding -->
-    <div class="messages-container">
         <!-- Messages Area -->
-        <div class="messages-area" id="chat-messages">
-            {% if not messages or messages|length == 0 %}
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-comment-medical"></i>
-                    </div>
-                    <div class="empty-state-text">Welcome to your AI Health Assistant</div>
-                    <div class="empty-state-subtext">
-                        Ask me anything about your health records, medications, or medical concerns.
-                        I'm here to help you understand your treatment and answer any questions you might have.
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+            <div class="message-row {% if message.is_ai %}ai-message{% else %}user-message{% endif %}">
+                <div class="message-bubble {% if message.is_ai %}ai-bubble{% else %}user-bubble{% endif %}">
+                    <div class="message-content">{{ message.message|safe }}</div>
+                    <div class="message-footer">
+                        <div class="message-time">{{ message.created_at|time:"g:i A" }}</div>
                     </div>
                 </div>
-            {% else %}
-                <!-- Date divider - today -->
-                <div class="date-divider">
-                    <span class="date-divider-text">Today</span>
-                </div>
-                
-                {% for message in messages %}
-                    <div class="message-row {% if message.is_ai %}ai-message{% else %}user-message{% endif %}">
-                        <div class="message-bubble {% if message.is_ai %}ai-bubble{% else %}user-bubble{% endif %}">
-                            <div class="message-content">
-                                {% if message.is_ai %}
-                                    {{ message.message|markdown_format }}
-                                {% else %}
-                                    {{ message.message|linebreaks }}
-                                {% endif %}
-                            </div>
-                            <div class="message-footer">
-                                <div class="message-time">
-                                    {{ message.created_at|date:"g:i A" }}
-                                </div>
-                                {% if not message.is_ai %}
-                                <div class="message-status">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-                
-                <!-- Typing indicator will be shown when AI is responding -->
-                <div class="typing-indicator" id="typing-indicator" style="display: none;">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Typing indicator (hidden by default) -->
+            <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
         </div>
 
         <!-- Input Area -->
         <div class="input-area">
-            <form method="post" class="input-form" id="chat-form">
+            <form method="post" class="input-form" id="chat-form" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="message-input-container">
-                    <input type="text" 
-                           name="message" 
-                           id="message-input"
-                           class="message-input" 
-                           placeholder="Type a message..." 
-                           required 
-                           {% if not ollama_available %}disabled{% endif %}
-                           autocomplete="off">
+                    <input type="text" name="message" id="message-input" class="message-input"
+                        placeholder="Type a message..." required autocomplete="off">
+
+                    <!-- File upload area (initially hidden) -->
+                    <div class="file-upload-area" id="file-upload-area" style="display: none;">
+                        <span class="file-name" id="file-name"></span>
+                        <span class="file-clear" id="file-clear"><i class="fas fa-times"></i></span>
+                    </div>
                 </div>
-                <button type="submit" id="send-button" class="send-button" {% if not ollama_available %}disabled{% endif %}>
+
+                <!-- File upload button -->
+                <label for="file-input" class="send-button" style="background-color: #6c757d;">
+                    <i class="fas fa-paperclip"></i>
+                </label>
+                <input type="file" id="file-input" name="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+
+                <button type="submit" id="send-button" class="send-button">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </form>
         </div>
 
-        <!-- Ollama Status Indicator -->
+        <!-- AI Service Status -->
         <div class="ollama-status">
-            {% if ollama_available %}
-                <span class="status-online"><i class="fas fa-circle"></i> AI Service Online</span>
-            {% else %}
-                <span class="status-offline"><i class="fas fa-circle"></i> AI Service Offline</span>
-            {% endif %}
+            <span class="status-online"><i class="fas fa-circle"></i> AI Service Online</span>
         </div>
     </div>
 </div>
 {% endblock content %}
 
 {% block extra_js %}
-<!-- Include the Marked.js library for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
-
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get form and UI elements
+    document.addEventListener('DOMContentLoaded', function () {
         const messagesArea = document.getElementById('chat-messages');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const typingIndicator = document.getElementById('typing-indicator');
-        
-        // Configure marked.js options
-        marked.setOptions({
-            renderer: new marked.Renderer(),
-            highlight: function(code, lang) {
-                return code; // Simple syntax highlighting
-            },
-            pedantic: false,
-            gfm: true,
-            breaks: true,
-            sanitize: false,
-            smartypants: false,
-            xhtml: false
-        });
-        
-        // Scroll to bottom of messages
-        messagesArea.scrollTop = messagesArea.scrollHeight;
-        
-        // Focus the input field
-        if (messageInput && !messageInput.disabled) {
-            messageInput.focus();
+        const fileInput = document.getElementById('file-input');
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const fileName = document.getElementById('file-name');
+        const fileClear = document.getElementById('file-clear');
+        const patientId = "{{ user.patient.id|default:'0' }}";
+
+    // Configure marked.js
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        sanitize: false,  // Allow HTML to support more formatting
+        headerIds: false  // Disable header IDs to avoid conflicts
+    });
+
+    // Scroll to bottom
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    // File input change handler
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileName.textContent = file.name;
+            fileUploadArea.style.display = 'flex';
+
+            // Validate file type and size
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a PDF or image file.');
+                clearFileInput();
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert('File size must be less than 10MB.');
+                clearFileInput();
+                return;
+            }
+        } else {
+            clearFileInput();
         }
-        
-        // Add event listener for the form submission
-        chatForm.addEventListener('submit', function(event) {
-            // Prevent the default form submission
-            event.preventDefault();
-            
-            // Get the message from the input field
-            const message = messageInput.value.trim();
-            
-            // If the message is not empty, proceed
-            if (message) {
-                // Store the message in a variable for later use
-                const userMessage = message;
-                
-                // Clear the input field immediately
-                messageInput.value = '';
-                
-                // Disable the input field and button
-                messageInput.disabled = true;
-                sendButton.disabled = true;
-                
-                // Create a new user message bubble immediately
-                const userMessageRow = document.createElement('div');
-                userMessageRow.className = 'message-row user-message';
-                
-                // Get the current time for the message
-                const now = new Date();
-                const timeString = now.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
-                
-                userMessageRow.innerHTML = `
-                    <div class="message-bubble user-bubble">
-                        <div class="message-content">${userMessage.replace(/\n/g, '<br>')}</div>
-                        <div class="message-footer">
-                            <div class="message-time">${timeString}</div>
-                            <div class="message-status">
-                                <i class="fas fa-check-double"></i>
-                            </div>
-                        </div>
+    });
+
+    // Clear file input
+    fileClear.addEventListener('click', clearFileInput);
+
+    function clearFileInput() {
+        fileInput.value = '';
+        fileUploadArea.style.display = 'none';
+        fileName.textContent = '';
+    }
+
+    // Form submission handler
+    chatForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const message = messageInput.value.trim();
+        if (!message && !fileInput.files.length) return;
+
+        // Clear input and disable
+        messageInput.value = '';
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+
+        // Add user message
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+        const userMessageRow = document.createElement('div');
+        userMessageRow.className = 'message-row user-message';
+
+        let messageContent = '';
+
+        // If there's a file, mention it in the message
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            messageContent += `<p>${message || 'I\'m sending you a file.'}</p>`;
+            messageContent += `<p><i class="fas fa-file"></i> ${file.name}</p>`;
+        } else {
+            messageContent = message.replace(/\n/g, '<br>');
+        }
+
+        userMessageRow.innerHTML = `
+                <div class="message-bubble user-bubble">
+                    <div class="message-content">${messageContent}</div>
+                    <div class="message-footer">
+                        <div class="message-time">${timeString}</div>
                     </div>
-                `;
-                
-                // Add the user message to the chat
-                messagesArea.appendChild(userMessageRow);
-                
-                // Scroll to the bottom
-                messagesArea.scrollTop = messagesArea.scrollHeight;
-                
-                // Show the typing indicator
-                typingIndicator.style.display = 'inline-flex';
-                messagesArea.appendChild(typingIndicator);
-                messagesArea.scrollTop = messagesArea.scrollHeight;
-                
-                // Make a simple AJAX request
-                const formData = new FormData();
-                formData.append('message', message);
-                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-                
-                fetch(window.location.href, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.text())
-                .then(text => {
-                    console.log("Server response:", text);
-                    
-                    // Hide typing indicator
-                    typingIndicator.style.display = 'none';
-                    
-                    try {
-                        const data = JSON.parse(text);
-                        
-                        if (data.success) {
-                            // Create AI response with markdown rendering
-                            const aiMessageRow = document.createElement('div');
-                            aiMessageRow.className = 'message-row ai-message';
-                            
-                            // Use marked.js to render markdown
-                            const renderedContent = marked.parse(data.message);
-                            
-                            aiMessageRow.innerHTML = `
-                                <div class="message-bubble ai-bubble">
-                                    <div class="message-content">${renderedContent}</div>
-                                    <div class="message-footer">
-                                        <div class="message-time">${timeString}</div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            messagesArea.appendChild(aiMessageRow);
-                        } else {
-                            // Create error message
-                            const errorMessageRow = document.createElement('div');
-                            errorMessageRow.className = 'message-row ai-message';
-                            errorMessageRow.innerHTML = `
-                                <div class="message-bubble ai-bubble">
-                                    <div class="message-content">Error: ${data.error || 'Unknown error'}</div>
-                                    <div class="message-footer">
-                                        <div class="message-time">${timeString}</div>
-                                    </div>
-                                </div>
-                            `;
-                            messagesArea.appendChild(errorMessageRow);
-                        }
-                    } catch (e) {
-                        console.error("Failed to parse JSON:", e);
-                        
-                        // If server didn't respond with valid JSON
-                        const errorMessageRow = document.createElement('div');
-                        errorMessageRow.className = 'message-row ai-message';
-                        errorMessageRow.innerHTML = `
-                            <div class="message-bubble ai-bubble">
-                                <div class="message-content">Sorry, there was an error processing your request. The server response was not valid.</div>
-                                <div class="message-footer">
-                                    <div class="message-time">${timeString}</div>
-                                </div>
-                            </div>
-                        `;
-                        messagesArea.appendChild(errorMessageRow);
-                    }
-                    
-                    // Re-enable input
-                    messageInput.disabled = false;
-                    sendButton.disabled = false;
-                    messageInput.focus();
-                    messagesArea.scrollTop = messagesArea.scrollHeight;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    
-                    typingIndicator.style.display = 'none';
-                    
-                    // Error message
-                    const errorMessageRow = document.createElement('div');
-                    errorMessageRow.className = 'message-row ai-message';
-                    errorMessageRow.innerHTML = `
+                </div>
+            `;
+        messagesArea.appendChild(userMessageRow);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        typingIndicator.style.display = 'inline-flex';
+        messagesArea.appendChild(typingIndicator);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        // Create FormData for the request
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('patient_id', patientId);
+
+        // Add file if present
+        if (fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        // Call Akash Chat API
+        fetch('/api/chat/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+
+                // Clear file input
+                clearFileInput();
+
+                if (data.message) {
+                    // Add AI response
+                    const aiMessageRow = document.createElement('div');
+                    aiMessageRow.className = 'message-row ai-message';
+                    aiMessageRow.innerHTML = `
                         <div class="message-bubble ai-bubble">
-                            <div class="message-content">Sorry, there was a network error. Please try again.</div>
+                            <div class="message-content">${marked.parse(data.message)}</div>
                             <div class="message-footer">
                                 <div class="message-time">${timeString}</div>
                             </div>
                         </div>
                     `;
-                    messagesArea.appendChild(errorMessageRow);
-                    
-                    messageInput.disabled = false;
-                    sendButton.disabled = false;
-                    messageInput.focus();
-                    messagesArea.scrollTop = messagesArea.scrollHeight;
-                });
-            }
-        });
-        
-        // Enable Enter key to send message
-        messageInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                if (messageInput.value.trim() !== '') {
-                    chatForm.dispatchEvent(new Event('submit'));
+                    messagesArea.appendChild(aiMessageRow);
+                } else {
+                    // Show error
+                    const errorRow = document.createElement('div');
+                    errorRow.className = 'message-row ai-message';
+                    errorRow.innerHTML = `
+                        <div class="message-bubble ai-bubble">
+                            <div class="message-content">Error: ${data.error || 'Unknown error occurred'}</div>
+                            <div class="message-footer">
+                                <div class="message-time">${timeString}</div>
+                            </div>
+                        </div>
+                    `;
+                    messagesArea.appendChild(errorRow);
                 }
-            }
-        });
-        
-        // Handle focus on page load
-        window.addEventListener('load', function() {
-            if (messageInput && !messageInput.disabled) {
+
+                // Scroll to bottom
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+                typingIndicator.style.display = 'none';
+
+                const errorRow = document.createElement('div');
+                errorRow.className = 'message-row ai-message';
+                errorRow.innerHTML = `
+                    <div class="message-bubble ai-bubble">
+                        <div class="message-content">Network error. Please try again.</div>
+                        <div class="message-footer">
+                            <div class="message-time">${timeString}</div>
+                        </div>
+                    </div>
+                `;
+                messagesArea.appendChild(errorRow);
+
+                // Clear file input
+                clearFileInput();
+            })
+            .finally(function () {
+                // Re-enable input
+                messageInput.disabled = false;
+                sendButton.disabled = false;
                 messageInput.focus();
-            }
-        });
-        
-        // Function to add CSS for better markdown styling
-        function addMarkdownStyles() {
-            const style = document.createElement('style');
-            style.innerHTML = `
-                /* Markdown styling for AI messages */
-                .ai-bubble .message-content h1,
-                .ai-bubble .message-content h2,
-                .ai-bubble .message-content h3,
-                .ai-bubble .message-content h4,
-                .ai-bubble .message-content h5,
-                .ai-bubble .message-content h6 {
-                    margin-top: 0.75rem;
-                    margin-bottom: 0.5rem;
-                    font-weight: 600;
-                    line-height: 1.2;
-                }
-                
-                .ai-bubble .message-content h1 { font-size: 1.5rem; }
-                .ai-bubble .message-content h2 { font-size: 1.3rem; }
-                .ai-bubble .message-content h3 { font-size: 1.1rem; }
-                .ai-bubble .message-content h4 { font-size: 1rem; }
-                
-                .ai-bubble .message-content p {
-                    margin-bottom: 0.75rem;
-                }
-                
-                .ai-bubble .message-content ul, 
-                .ai-bubble .message-content ol {
-                    margin: 0.5rem 0;
-                    padding-left: 1.5rem;
-                }
-                
-                .ai-bubble .message-content li {
-                    margin-bottom: 0.25rem;
-                }
-                
-                .ai-bubble .message-content code {
-                    background-color: var(--code-bg);
-                    padding: 0.2rem 0.4rem;
-                    border-radius: 0.25rem;
-                    font-family: monospace;
-                    font-size: 0.9rem;
-                }
-                
-                .ai-bubble .message-content pre {
-                    background-color: var(--code-bg);
-                    padding: 0.75rem;
-                    border-radius: 0.25rem;
-                    overflow-x: auto;
-                    margin: 0.75rem 0;
-                }
-                
-                .ai-bubble .message-content pre code {
-                    background-color: transparent;
-                    padding: 0;
-                    border-radius: 0;
-                }
-                
-                .ai-bubble .message-content a {
-                    color: #93c5fd;
-                    text-decoration: underline;
-                }
-                
-                .ai-bubble .message-content a:hover {
-                    text-decoration: none;
-                }
-                
-                .ai-bubble .message-content blockquote {
-                    border-left: 0.25rem solid var(--primary-color);
-                    padding: 0.25rem 0.75rem;
-                    margin: 0.75rem 0;
-                    background-color: rgba(79, 70, 229, 0.1);
-                }
-                
-                .ai-bubble .message-content table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    margin: 0.75rem 0;
-                    font-size: 0.9rem;
-                }
-                
-                .ai-bubble .message-content th,
-                .ai-bubble .message-content td {
-                    border: 1px solid var(--border-color);
-                    padding: 0.5rem 0.75rem;
-                }
-                
-                .ai-bubble .message-content th {
-                    background-color: var(--table-header-bg);
-                    font-weight: 600;
-                }
-                
-                /* Fix for paragraphs inside list items */
-                .ai-bubble .message-content li p {
-                    margin-bottom: 0.25rem;
-                }
-                
-                /* Fix for last paragraph in message */
-                .ai-bubble .message-content p:last-child {
-                    margin-bottom: 0;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Add markdown styles
-        addMarkdownStyles();
-        
-        // Apply markdown rendering to existing AI messages
-        document.querySelectorAll('.ai-bubble .message-content').forEach(content => {
-            const originalText = content.innerText;
-            if (originalText && !content.dataset.markdownProcessed) {
-                try {
-                    content.innerHTML = marked.parse(originalText);
-                    content.dataset.markdownProcessed = 'true';
-                } catch (e) {
-                    console.error('Failed to parse markdown for existing message:', e);
-                }
-            }
-        });
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            });
     });
+
+    // Handle Enter key
+    messageInput.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+});
 </script>
-{% endblock extra_js %} 
+{% endblock extra_js %}
