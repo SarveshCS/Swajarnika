@@ -1,14 +1,18 @@
 from django.urls import path
+
 from .views import (
-    DoctorRegisterView, DoctorLoginView, PatientRegisterView,
-    VisitCreateView, FileUploadView, AIInteractView, 
-    PatientLoginView, PatientProfileView, LogoutView,
+    AIInteractView,
     ChatAPIView,
-    # Add other view imports here as needed.
+    DoctorLoginView,
+    DoctorRegisterView,
+    FileUploadView,
+    LogoutView,
+    PatientLoginView,
+    PatientProfileView,
+    PatientRegisterView,
+    VisitCreateView,
 )
 
-from . import template_views
-from . import views
 urlpatterns = [
     path('doctors/register/', DoctorRegisterView.as_view(), name='doctor-register'),
     path('doctors/login/', DoctorLoginView.as_view(), name='doctor-login'),
@@ -18,10 +22,6 @@ urlpatterns = [
     path('visits/', VisitCreateView.as_view(), name='visit-create'),
     path('files/', FileUploadView.as_view(), name='file-upload'),
     path('ai/interact/', AIInteractView.as_view(), name='ai-interact'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('patient/ai-chat/', ChatAPIView.as_view(), name='patient_ai_chat'),
+    path('logout/', LogoutView.as_view(), name='logout-api'),
     path('chat/', ChatAPIView.as_view(), name='chat-api'),
-    # path('api/chat/', views.chat_api, name='chat_api'),
-    # Add endpoints for patient login, view medications, tests, and files as required.
-
 ]

@@ -13,10 +13,10 @@ import PyPDF2
 import io
 from datetime import date
 
-# Akash API configuration
-AKASH_API_ENDPOINT = "https://api.akash.chat/v1"
-# Should be moved to settings.py in production
-AKASH_API_KEY = "sk-kSOuRSNOgj1XmRUm6rk48A"
+# Akash API configuration (loaded from Django settings / environment)
+AKASH_API_ENDPOINT = getattr(settings, 'AKASH_API_BASE', 'https://chatapi.akash.network/api/v1')
+AKASH_API_KEY = getattr(settings, 'AKASH_API_KEY', '')
+AKASH_MODEL = getattr(settings, 'AKASH_MODEL', 'Meta-Llama-3-1-8B-Instruct-FP8')
 REQUEST_TIMEOUT = 15  # seconds for normal requests
 DOCUMENT_TIMEOUT = 60  # seconds for document processing
 
@@ -105,9 +105,7 @@ Address: {patient.address if patient.address else 'Not recorded'}
             if prompts.exists():
                 context += "\n\nClinician Notes for AI:"
                 for prompt in prompts:
-                    if hasattr(prompt, 'prompt_text') and prompt.prompt_text:
-                        context += f"\n- {prompt.prompt_text}"
-                    elif hasattr(prompt, 'prompt') and prompt.prompt:
+                    if prompt.prompt:
                         context += f"\n- {prompt.prompt}"
 
     # Add summary information at the end

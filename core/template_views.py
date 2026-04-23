@@ -17,8 +17,11 @@ from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 import traceback
+import logging
 from typing import List, Dict
 import json
+
+logger = logging.getLogger(__name__)
 
 # First define the decorators
 
@@ -36,7 +39,7 @@ def patient_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not hasattr(request.user, 'patient'):
-            return redirect('login')
+            return redirect('patient_login')
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -157,33 +160,23 @@ def patient_login(request):
         password = request.POST.get('password')
 
         try:
-            # Debug messages
-            print(f"Attempting login with phone: {phone}")
-
             User = get_user_model()
             try:
-                user = User.objects.get(username=phone)
-                print(f"Found user: {user.username}")
-                print(f"Is patient: {hasattr(user, 'patient')}")
+                User.objects.get(username=phone)
             except User.DoesNotExist:
-                print("User not found")
+                logger.info('Patient login: user not found for phone=%s', phone)
                 return render(request, 'core/patient/login.html')
 
             authenticated_user = authenticate(
                 username=phone, password=password)
-            print(f"Authentication result: {authenticated_user is not None}")
-
-            if authenticated_user is not None:
-                print(
-                    f"Has patient attr: {hasattr(authenticated_user, 'patient')}")
 
             if authenticated_user is not None and hasattr(authenticated_user, 'patient'):
                 login(request, authenticated_user)
                 return redirect('patient_dashboard')
             else:
                 return render(request, 'core/patient/login.html')
-        except Exception as e:
-            print(f"Login error: {str(e)}")
+        except Exception:
+            logger.exception('Patient login error')
 
     return render(request, 'core/patient/login.html')
 

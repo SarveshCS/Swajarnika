@@ -17,11 +17,6 @@ class DoctorRegisterSerializer(serializers.ModelSerializer):
         doctor = Doctor.objects.create(user=user, **validated_data)
         return doctor
 
-class PatientRegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Patient
-        fields = ['id', 'name', 'date_of_birth', 'gender', 'phone', 'address']
-
 class VisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Visit

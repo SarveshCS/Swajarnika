@@ -13,20 +13,39 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env at project root
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v&1hh2le6trcpmwnz55v@d)2l%-bk57&hk2#!03&2p6k^6$27$'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-dev-only-change-me',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    if h.strip()
+]
+
+# Akash LLM API configuration (consumed in core/utils.py and core/views.py)
+AKASH_API_KEY = os.environ.get('AKASH_API_KEY', '')
+AKASH_API_BASE = os.environ.get(
+    'AKASH_API_BASE', 'https://chatapi.akash.network/api/v1'
+)
+AKASH_MODEL = os.environ.get('AKASH_MODEL', 'Meta-Llama-3-1-8B-Instruct-FP8')
 
 
 # Application definition
@@ -38,7 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core'
+    'rest_framework',
+    'core',
 ]
 
 MIDDLEWARE = [
