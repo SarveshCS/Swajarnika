@@ -1,175 +1,114 @@
 {% extends 'core/base.html' %}
 
+{% block title %}New Visit — {{ patient.name }}{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-calendar-plus me-2"></i>Add New Visit</h2>
-        <a href="{% url 'doctor_patient_detail' patient.id %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Back to Patient
-        </a>
+<div class="sw-page-head">
+    <div>
+        <h1>New visit for {{ patient.name }}</h1>
+        <p class="sw-page-subtitle">Record diagnosis, medications, tests, and files in one form.</p>
     </div>
-
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        <!-- Visit Details -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Visit Information</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Date of Visit</label>
-                            <input type="date" class="form-control" name="date_of_visit" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Diagnosis</label>
-                            <textarea class="form-control" name="diagnosis" rows="3" required></textarea>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Treatment Plan</label>
-                            <textarea class="form-control" name="treatment_plan" rows="3" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" name="notes" rows="3"></textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Medications -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">Medications</h3>
-                <button type="button" class="btn btn-success" onclick="addMedication()">
-                    <i class="fas fa-plus me-1"></i>Add Medication
-                </button>
-            </div>
-            <div class="card-body">
-                <div id="medications-container"></div>
-            </div>
-        </div>
-
-        <!-- Tests -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">Tests</h3>
-                <button type="button" class="btn btn-success" onclick="addTest()">
-                    <i class="fas fa-plus me-1"></i>Add Test
-                </button>
-            </div>
-            <div class="card-body">
-                <div id="tests-container"></div>
-            </div>
-        </div>
-
-        <!-- Files -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Upload Files</h3>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Select Files</label>
-                    <input type="file" class="form-control" name="files[]" multiple>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">File Description</label>
-                    <textarea class="form-control" name="file_description" rows="2"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-end mb-5">
-            <button type="button" class="btn btn-secondary me-2" onclick="history.back()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Visit</button>
-        </div>
-    </form>
+    <a href="{% url 'doctor_patient_detail' patient.id %}" class="sw-btn sw-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
 </div>
 
-{% block extra_js %}
-<script>
-function addMedication() {
-    const container = document.getElementById('medications-container');
-    const index = container.children.length;
-    
-    const medicationHtml = `
-        <div class="medication-item border rounded p-3 mb-3">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Medication Name</label>
-                        <input type="text" class="form-control" name="medication_name[]" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reason</label>
-                        <textarea class="form-control" name="medication_reason[]" rows="2" required></textarea>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Instructions</label>
-                        <textarea class="form-control" name="medication_instructions[]" rows="2" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Missed Dose Instructions</label>
-                        <textarea class="form-control" name="medication_missed_instructions[]" rows="2" required></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="text-end">
-                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-trash me-1"></i>Remove
-                </button>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', medicationHtml);
-}
+<form method="post" enctype="multipart/form-data" class="sw-stack">
+    {% csrf_token %}
 
-function addTest() {
-    const container = document.getElementById('tests-container');
-    const index = container.children.length;
-    
-    const testHtml = `
-        <div class="test-item border rounded p-3 mb-3">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label class="form-label">Test Name</label>
-                        <input type="text" class="form-control" name="test_name[]" required>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label class="form-label">Region</label>
-                        <input type="text" class="form-control" name="test_region[]">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label class="form-label">Reason</label>
-                        <textarea class="form-control" name="test_reason[]" rows="2" required></textarea>
-                    </div>
-                </div>
+    <div class="sw-card">
+        <div class="sw-card-header"><span><i class="fas fa-stethoscope"></i> Visit Details</span></div>
+        <div class="sw-card-body sw-stack">
+            <div class="sw-form-group">
+                <label class="sw-label">Date of visit</label>
+                <input class="sw-input" type="date" name="date_of_visit" max="{% now 'Y-m-d' %}" required>
             </div>
-            <div class="text-end">
-                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-trash me-1"></i>Remove
-                </button>
+            <div class="sw-form-group">
+                <label class="sw-label">Diagnosis</label>
+                <textarea class="sw-textarea" name="diagnosis" required rows="3"></textarea>
+            </div>
+            <div class="sw-form-group">
+                <label class="sw-label">Treatment plan</label>
+                <textarea class="sw-textarea" name="treatment_plan" required rows="3"></textarea>
+            </div>
+            <div class="sw-form-group">
+                <label class="sw-label">Notes <span class="sw-text-soft">(optional)</span></label>
+                <textarea class="sw-textarea" name="notes" rows="2"></textarea>
             </div>
         </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', testHtml);
-}
+    </div>
+
+    <div class="sw-card">
+        <div class="sw-card-header">
+            <span><i class="fas fa-pills"></i> Medications</span>
+            <button type="button" class="sw-btn sw-btn-sm sw-btn-secondary" onclick="addMedRow()">
+                <i class="fas fa-plus"></i> Add medication
+            </button>
+        </div>
+        <div class="sw-card-body" id="medList">
+            <!-- rows injected here -->
+        </div>
+    </div>
+
+    <div class="sw-card">
+        <div class="sw-card-header">
+            <span><i class="fas fa-vial"></i> Tests</span>
+            <button type="button" class="sw-btn sw-btn-sm sw-btn-secondary" onclick="addTestRow()">
+                <i class="fas fa-plus"></i> Add test
+            </button>
+        </div>
+        <div class="sw-card-body" id="testList">
+            <!-- rows injected here -->
+        </div>
+    </div>
+
+    <div class="sw-card">
+        <div class="sw-card-header"><span><i class="fas fa-file-upload"></i> Files</span></div>
+        <div class="sw-card-body sw-stack">
+            <div class="sw-form-group">
+                <label class="sw-label">Attach files <span class="sw-text-soft">(optional, multiple)</span></label>
+                <input class="sw-input" type="file" name="files[]" multiple>
+            </div>
+            <div class="sw-form-group">
+                <label class="sw-label">File description</label>
+                <input class="sw-input" type="text" name="file_description">
+            </div>
+        </div>
+    </div>
+
+    <div class="sw-flex-between">
+        <a href="{% url 'doctor_patient_detail' patient.id %}" class="sw-btn sw-btn-secondary">Cancel</a>
+        <button type="submit" class="sw-btn sw-btn-lg"><i class="fas fa-save"></i> Save Visit</button>
+    </div>
+</form>
+
+<template id="medRowTpl">
+    <div class="sw-grid sw-grid-2 sw-mb-3">
+        <input class="sw-input" type="text" name="medication_name[]" placeholder="Medication name">
+        <input class="sw-input" type="text" name="medication_reason[]" placeholder="Reason">
+        <input class="sw-input" type="text" name="medication_instructions[]" placeholder="Instructions">
+        <input class="sw-input" type="text" name="medication_missed_instructions[]" placeholder="If missed dose">
+    </div>
+</template>
+
+<template id="testRowTpl">
+    <div class="sw-grid sw-grid-3 sw-mb-3">
+        <input class="sw-input" type="text" name="test_name[]" placeholder="Test name">
+        <input class="sw-input" type="text" name="test_region[]" placeholder="Region / body part">
+        <input class="sw-input" type="text" name="test_reason[]" placeholder="Reason">
+    </div>
+</template>
+
+<script>
+    function addMedRow() {
+        const tpl = document.getElementById('medRowTpl').content.cloneNode(true);
+        document.getElementById('medList').appendChild(tpl);
+    }
+    function addTestRow() {
+        const tpl = document.getElementById('testRowTpl').content.cloneNode(true);
+        document.getElementById('testList').appendChild(tpl);
+    }
+    // start with one row each
+    addMedRow(); addTestRow();
 </script>
 {% endblock %}
-{% endblock %} 

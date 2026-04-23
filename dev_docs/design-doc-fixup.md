@@ -1,5 +1,9 @@
 # Design doc — Codebase fix-up plan
 
+> ⚠️ **ARCHIVED — historical plan, completed.** The phases below were all executed on 2026-04-23.
+> See [`tracker-fixup.md`](tracker-fixup.md) for the closed-out tracker, and
+> [`auth-refactor.md`](auth-refactor.md) / [`demo-data.md`](demo-data.md) for current work.
+
 **Status:** Draft · **Owner:** Team · **Created:** 2026-04-23
 
 This doc describes how we will bring the Swajarnika codebase back to a clean, consistent, working state after ~1 year of inactivity. It is the source of truth for *what* we are changing and *why*. The step-by-step execution log lives in [`tracker-fixup.md`](tracker-fixup.md).

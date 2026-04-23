@@ -2,184 +2,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swajarnika</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .navbar {
-            padding: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .nav-link {
-            font-weight: 500;
-        }
-        .alert {
-            margin-top: 1rem;
-        }
-        .card {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid rgba(0,0,0,0.125);
-        }
-        .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-        .table {
-            margin-bottom: 0;
-        }
-        .footer {
-            margin-top: 3rem;
-            padding: 1rem 0;
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-    </style>
-    {% block extra_css %}
-    {% endblock %}
+    <title>{% block title %}Swajarnika{% endblock %}</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'core/css/main.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="{% static 'core/images/logo.svg' %}" alt="Swajarnika Logo" height="40" class="me-2">
-                Swajarnika
+    <header class="sw-header">
+        <div class="sw-container sw-nav">
+            <a class="sw-brand" href="/">
+                <img src="{% static 'core/images/logo.svg' %}" alt="" onerror="this.style.display='none'">
+                <span>Swajarnika</span>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="sw-nav-toggle" type="button" aria-label="Toggle nav"
+                    onclick="document.getElementById('swNavLinks').classList.toggle('open')">
+                <i class="fas fa-bars"></i>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
-                        {% if user.is_doctor %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'doctor_dashboard' %}">
-                                    <i class="fas fa-columns me-1"></i>Dashboard
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'doctor_patient_add' %}">
-                                    <i class="fas fa-user-plus me-1"></i>Add Patient
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-md me-1"></i>Dr. {{ user.doctor.name }}
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'logout' %}">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Logout
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        {% elif user.is_patient %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'patient_dashboard' %}">
-                                    <i class="fas fa-columns me-1"></i>Dashboard
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'patient_medications' %}">
-                                    <i class="fas fa-pills me-1"></i>Medications
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'patient_tests' %}">
-                                    <i class="fas fa-vial me-1"></i>Tests
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'patient_files' %}">
-                                    <i class="fas fa-file-medical me-1"></i>Files
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user me-1"></i>{{ user.patient.name }}
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'logout' %}">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Logout
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        {% endif %}
+
+            <ul class="sw-nav-links" id="swNavLinks">
+                {% if user.is_authenticated %}
+                    {% if user.is_doctor %}
+                        <li><a href="{% url 'doctor_dashboard' %}"><i class="fas fa-columns"></i> Dashboard</a></li>
+                        <li><a href="{% url 'doctor_patient_add' %}"><i class="fas fa-user-plus"></i> Add Patient</a></li>
+                        <li><span class="sw-nav-user"><i class="fas fa-user-md"></i> Dr. {{ user.doctor.name }}</span></li>
+                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    {% elif user.is_patient %}
+                        <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-columns"></i> Dashboard</a></li>
+                        <li><a href="{% url 'patient_medications' %}"><i class="fas fa-pills"></i> Medications</a></li>
+                        <li><a href="{% url 'patient_tests' %}"><i class="fas fa-vial"></i> Tests</a></li>
+                        <li><a href="{% url 'patient_files' %}"><i class="fas fa-file-medical"></i> Files</a></li>
+                        <li><a href="{% url 'patient_ai_chat' %}"><i class="fas fa-robot"></i> AI Chat</a></li>
+                        <li><span class="sw-nav-user"><i class="fas fa-user"></i> {{ user.patient.name }}</span></li>
+                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'doctor_login' %}">
-                                <i class="fas fa-user-md me-1"></i>Doctor Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'doctor_register' %}">
-                                <i class="fas fa-user-plus me-1"></i>Doctor Register
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patient_login' %}">
-                                <i class="fas fa-user me-1"></i>Patient Login
-                            </a>
-                        </li>
+                        <li><span class="sw-nav-user"><i class="fas fa-user-shield"></i> {{ user.username }}</span></li>
+                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     {% endif %}
-                </ul>
-            </div>
+                {% else %}
+                    <li><a href="{% url 'doctor_login' %}"><i class="fas fa-user-md"></i> Doctor Login</a></li>
+                    <li><a href="{% url 'doctor_register' %}"><i class="fas fa-user-plus"></i> Doctor Register</a></li>
+                    <li><a href="{% url 'patient_login' %}"><i class="fas fa-user"></i> Patient Login</a></li>
+                    <li><a href="{% url 'patient_register' %}"><i class="fas fa-user-plus"></i> Patient Register</a></li>
+                {% endif %}
+            </ul>
         </div>
-    </nav>
+    </header>
 
-    <div class="container mt-4">
-        {% block content %}
-        {% endblock %}
-    </div>
+    <main class="sw-main">
+        <div class="sw-container">
+            {% if messages %}
+                <div class="sw-stack sw-mb-4">
+                    {% for message in messages %}
+                        {% if 'error' in message.tags or 'danger' in message.tags %}
+                            <div class="sw-alert sw-alert-danger">{{ message }}</div>
+                        {% elif 'success' in message.tags %}
+                            <div class="sw-alert sw-alert-success">{{ message }}</div>
+                        {% elif 'warning' in message.tags %}
+                            <div class="sw-alert sw-alert-warning">{{ message }}</div>
+                        {% else %}
+                            <div class="sw-alert">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-    <footer class="footer mt-auto">
-        <div class="container">
-            <div class="text-center">
-            <img src="{% static 'core/images/logo.svg' %}" alt="Swajarnika Logo" height="30" class="mb-2">
-            <p class="text-muted mb-0">&copy; 2024 Swajarnika. All rights reserved.</p>
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-            </div>
+    <footer class="sw-footer">
+        <div class="sw-container sw-footer-inner">
+            <span>&copy; 2026 Swajarnika — built with care for healthcare.</span>
+            <span class="sw-text-soft">v1.0</span>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        // Enable Bootstrap tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
-
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    var bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-        });
-    </script>
-    {% block extra_js %}
-    {% endblock %}
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

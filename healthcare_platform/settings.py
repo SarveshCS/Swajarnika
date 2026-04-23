@@ -40,12 +40,12 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
-# Akash LLM API configuration (consumed in core/utils.py and core/views.py)
-AKASH_API_KEY = os.environ.get('AKASH_API_KEY', '')
-AKASH_API_BASE = os.environ.get(
-    'AKASH_API_BASE', 'https://chatapi.akash.network/api/v1'
+# Groq LLM API configuration (OpenAI-compatible; consumed in core/utils.py and core/views.py)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_API_BASE = os.environ.get(
+    'GROQ_API_BASE', 'https://api.groq.com/openai/v1'
 )
-AKASH_MODEL = os.environ.get('AKASH_MODEL', 'Meta-Llama-3-1-8B-Instruct-FP8')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
 
 # Application definition

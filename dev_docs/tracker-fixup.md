@@ -1,7 +1,9 @@
 # Fix-up tracker — COMPLETE ✅
 
-> Pairs with [`design-doc-fixup.md`](design-doc-fixup.md). All phases completed on 2026-04-23.
+> ⚠️ **ARCHIVED — closed out.** Kept for history only. Current work lives in
+> [`auth-refactor.md`](auth-refactor.md) and [`demo-data.md`](demo-data.md).
 
+> Pairs with [`design-doc-fixup.md`](design-doc-fixup.md). All phases completed on 2026-04-23.
 **Legend:** `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` skipped (documented)
 
 ---

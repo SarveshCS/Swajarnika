@@ -1,6 +1,6 @@
 # Swajarnika
 
-A Django-based healthcare platform that connects **doctors** and **patients**, with an AI-powered chat assistant for patients (backed by the Akash Network LLM API).
+A Django-based healthcare platform that connects **doctors** and **patients**, with an AI-powered chat assistant for patients (backed by the Groq LLM API).
 
 > Status: College project being rehabilitated after ~1 year of inactivity. See [`dev_docs/design-doc-fixup.md`](dev_docs/design-doc-fixup.md) for the active refactor plan.
 
@@ -19,7 +19,7 @@ A Django-based healthcare platform that connects **doctors** and **patients**, w
 - Django 5.2
 - Django REST Framework (templates + DRF API)
 - SQLite (default, dev only)
-- Akash Network chat completions API (LLM)
+- Groq chat completions API (LLM, OpenAI-compatible)
 - `PyPDF2` for PDF text extraction, `markdown` for rendering AI replies
 
 ## Project layout
@@ -38,7 +38,7 @@ Swajarnika/
 │   ├── urls.py                 # DRF API routes
 │   ├── template_urls.py        # HTML routes (and re-declares API routes — to be fixed)
 │   ├── serializers.py
-│   ├── utils.py                # Akash API client, patient context builder, PDF extraction
+│   ├── utils.py                # Groq API client, patient context builder, PDF extraction
 │   ├── admin.py
 │   ├── templates/core/         # HTML templates (doctor/, patient/)
 │   ├── static/core/
@@ -84,10 +84,10 @@ DJANGO_SECRET_KEY=change-me
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
 
-# Akash LLM API
-AKASH_API_KEY=sk-xxxxxxxx
-AKASH_API_BASE=https://chatapi.akash.network/api/v1
-AKASH_MODEL=Meta-Llama-3-1-8B-Instruct-FP8
+# Groq LLM API
+GROQ_API_KEY=gsk-xxxxxxxx
+GROQ_API_BASE=https://api.groq.com/openai/v1
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
 ## Key URLs

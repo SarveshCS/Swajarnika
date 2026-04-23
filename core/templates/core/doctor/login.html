@@ -1,42 +1,29 @@
 {% extends 'core/base.html' %}
 
-{% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Doctor Login</h3>
-                </div>
-                <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+{% block title %}Doctor Login — Swajarnika{% endblock %}
 
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Login</button>
-                        </div>
-                    </form>
-                    <div class="mt-3 text-center">
-                        <p>Don't have an account? <a href="{% url 'doctor_register' %}">Register here</a></p>
-                    </div>
-                </div>
+{% block content %}
+<div class="sw-auth-wrap">
+    <div class="sw-auth-card">
+        <h2><i class="fas fa-user-md" style="color: var(--color-primary);"></i> Doctor Login</h2>
+
+        <form method="post" class="sw-stack">
+            {% csrf_token %}
+            <div class="sw-form-group">
+                <label class="sw-label" for="email">Email</label>
+                <input class="sw-input" type="email" id="email" name="email" required autofocus>
             </div>
+            <div class="sw-form-group">
+                <label class="sw-label" for="password">Password</label>
+                <input class="sw-input" type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="sw-btn sw-btn-block sw-btn-lg">Log in</button>
+        </form>
+
+        <div class="sw-auth-swap">
+            New here? <a href="{% url 'doctor_register' %}">Register as a doctor</a>
+            <br>Are you a patient? <a href="{% url 'patient_login' %}">Patient login</a>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

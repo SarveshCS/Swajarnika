@@ -1,85 +1,70 @@
 {% extends "core/base.html" %}
 
+{% block title %}Swajarnika — Modern healthcare portal{% endblock %}
+
 {% block content %}
-<div class="container">
-    <!-- Hero Section -->
-    <section class="hero-section text-center py-5 bg-light">
-        <h1 class="display-4">Welcome to Swajarnika</h1>
-        <p class="lead">Revolutionizing healthcare through technology and integrity</p>
-    </section>
+<section class="sw-hero sw-mb-6">
+    <h1>Welcome to Swajarnika</h1>
+    <p>Connecting doctors and patients through a clean, modern healthcare platform.</p>
+    <div class="sw-flex-center sw-mt-4 sw-flex-wrap">
+        <a href="{% url 'patient_register' %}" class="sw-btn sw-btn-lg">
+            <i class="fas fa-user-plus"></i> Register as Patient
+        </a>
+        <a href="{% url 'doctor_register' %}" class="sw-btn sw-btn-lg sw-btn-secondary">
+            <i class="fas fa-user-md"></i> Register as Doctor
+        </a>
+    </div>
+</section>
 
-    <!-- About Section -->
-    <section class="about-section py-5">
-        <div class="row">
-            <div class="col-md-6">
-                <h2>What is Swajarnika?</h2>
-                <p>Swajarnika is a comprehensive healthcare platform designed to bridge the gap between patients and healthcare providers. Our mission is to enhance medical integrity and improve patient outcomes through innovative technology solutions.</p>
-            </div>
-            <div class="col-md-6">
-                <img src="static/core/images/doctor-meeting-patient-office-young-female-smiling-medicine-healthcare-concept-150696989.png" alt="Healthcare illustration" class="img-fluid rounded">
+<section class="sw-section">
+    <div class="sw-grid sw-grid-3">
+        <div class="sw-card">
+            <div class="sw-card-body">
+                <i class="fas fa-shield-alt" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <h3 class="sw-mt-3">Secure Records</h3>
+                <p class="sw-text-muted">Your medical history stays organized, private, and accessible to the right people.</p>
             </div>
         </div>
-    </section>
+        <div class="sw-card">
+            <div class="sw-card-body">
+                <i class="fas fa-clock" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <h3 class="sw-mt-3">24/7 Access</h3>
+                <p class="sw-text-muted">Review visits, medications, and tests any time from any device.</p>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-card-body">
+                <i class="fas fa-robot" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <h3 class="sw-mt-3">AI Assistant</h3>
+                <p class="sw-text-muted">Ask plain-language questions about your records with grounded AI help.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
-    <!-- Benefits Section -->
-    <section class="benefits-section py-5 bg-light">
-        <h2 class="text-center mb-5">How We Help Patients</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Secure Medical Records</h5>
-                        <p class="card-text">Your health data is protected with advanced encryption and blockchain technology.</p>
-                    </div>
+<section class="sw-section">
+    <div class="sw-card">
+        <div class="sw-card-body">
+            <div class="sw-grid sw-grid-2">
+                <div>
+                    <h2>What is Swajarnika?</h2>
+                    <p class="sw-text-muted">
+                        A healthcare platform that bridges patients and doctors. Doctors manage visits,
+                        medications, tests and documents in one place — patients get a single, clear view
+                        of their own history.
+                    </p>
+                    <ul class="sw-stack">
+                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Digital prescriptions</li>
+                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Test result tracking</li>
+                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Document library per patient</li>
+                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Context-aware AI assistant</li>
+                    </ul>
+                </div>
+                <div class="sw-flex-center">
+                    <i class="fas fa-heart-pulse" style="font-size: 8rem; color: var(--color-primary-soft);"></i>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">24/7 Access</h5>
-                        <p class="card-text">Access your medical information anytime, anywhere through our secure portal.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">AI Assistance</h5>
-                        <p class="card-text">Get instant answers to your health questions through our AI-powered chatbot.</p>
-                    </div>
-                </div>
-            </div>
         </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section py-5">
-        <h2 class="text-center mb-5">Our Key Features</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Secure patient-doctor communication</li>
-                    <li class="list-group-item">Digital prescription management</li>
-                    <li class="list-group-item">Medical test result tracking</li>
-                </ul>
-            </div>
-            <div class="col-md-6">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Medication reminders</li>
-                    <li class="list-group-item">Appointment scheduling</li>
-                    <li class="list-group-item">Health analytics dashboard</li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section py-5 bg-primary text-white text-center">
-        <h2>Ready to experience better healthcare?</h2>
-        <div class="mt-4">
-            <a href="{% url 'patient_login' %}" class="btn btn-light btn-lg mx-2">Login</a>
-            <a href="{% url 'patient_register' %}" class="btn btn-outline-light btn-lg mx-2">Register</a>
-        </div>
-    </section>
-</div>
+    </div>
+</section>
 {% endblock %}

@@ -45,5 +45,4 @@ class AIPromptSerializer(serializers.ModelSerializer):
 class PatientRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
-        fields = ['id', 'name', 'date_of_birth', 'gender', 'phone', 'address', 'password']
-        read_only_fields = ['password']
+        fields = ['id', 'name', 'email', 'date_of_birth', 'gender', 'phone', 'address']

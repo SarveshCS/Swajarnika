@@ -17,7 +17,7 @@ from .serializers import (
     PatientRegisterSerializer,
     VisitSerializer,
 )
-from .utils import format_chat_messages, query_akash_chat
+from .utils import format_chat_messages, query_groq_chat
 
 User = get_user_model()
 
@@ -117,11 +117,11 @@ class AIInteractView(APIView):
             # Get the patient
             patient = Patient.objects.get(id=patient_id)
 
-            # Format messages for Akash API
+            # Format messages for Groq API
             messages = format_chat_messages(patient, question)
 
-            # Get AI response from Akash API
-            answer = query_akash_chat(messages)
+            # Get AI response from Groq API
+            answer = query_groq_chat(messages)
 
             return Response({'answer': answer})
         except Patient.DoesNotExist:
@@ -132,15 +132,15 @@ class AIInteractView(APIView):
 
 class PatientLoginView(APIView):
     def post(self, request):
-        phone = request.data.get('phone')
+        email = (request.data.get('email') or '').strip().lower()
         password = request.data.get('password')
 
         try:
-            user = User.objects.get(username=phone)
+            user = User.objects.get(username=email)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        user = authenticate(username=phone, password=password)
+        user = authenticate(username=email, password=password)
         if user is not None and hasattr(user, 'patient'):
             login(request, user)
             return Response({'message': 'Login successful', 'patient_id': user.patient.id}, status=status.HTTP_200_OK)
@@ -176,19 +176,19 @@ class ChatAPIView(APIView):
             messages = format_chat_messages(patient, message)
 
             payload = {
-                "model": getattr(settings, 'AKASH_MODEL', 'Meta-Llama-3-1-8B-Instruct-FP8'),
+                "model": getattr(settings, 'GROQ_MODEL', 'llama-3.3-70b-versatile'),
                 "messages": messages,  # Use the formatted messages from utils
                 "temperature": 0.7,
                 "max_tokens": 1024
             }
 
             headers = {
-                "Authorization": f"Bearer {getattr(settings, 'AKASH_API_KEY', '')}",
+                "Authorization": f"Bearer {getattr(settings, 'GROQ_API_KEY', '')}",
                 "Content-Type": "application/json"
             }
 
             response = requests.post(
-                f"{getattr(settings, 'AKASH_API_BASE', 'https://chatapi.akash.network/api/v1')}/chat/completions",
+                f"{getattr(settings, 'GROQ_API_BASE', 'https://api.groq.com/openai/v1')}/chat/completions",
                 json=payload,
                 headers=headers,
                 timeout=20

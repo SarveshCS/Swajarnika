@@ -13,10 +13,10 @@ import PyPDF2
 import io
 from datetime import date
 
-# Akash API configuration (loaded from Django settings / environment)
-AKASH_API_ENDPOINT = getattr(settings, 'AKASH_API_BASE', 'https://chatapi.akash.network/api/v1')
-AKASH_API_KEY = getattr(settings, 'AKASH_API_KEY', '')
-AKASH_MODEL = getattr(settings, 'AKASH_MODEL', 'Meta-Llama-3-1-8B-Instruct-FP8')
+# Groq API configuration (loaded from Django settings / environment)
+GROQ_API_ENDPOINT = getattr(settings, 'GROQ_API_BASE', 'https://api.groq.com/openai/v1')
+GROQ_API_KEY = getattr(settings, 'GROQ_API_KEY', '')
+GROQ_MODEL = getattr(settings, 'GROQ_MODEL', 'llama-3.3-70b-versatile')
 REQUEST_TIMEOUT = 15  # seconds for normal requests
 DOCUMENT_TIMEOUT = 60  # seconds for document processing
 
@@ -143,12 +143,12 @@ Address: {patient.address if patient.address else 'Not recorded'}
     return context
 
 
-def is_akash_available() -> bool:
-    """Check if Akash API is available"""
+def is_groq_available() -> bool:
+    """Check if Groq API is available"""
     try:
         response = requests.get(
-            f"{AKASH_API_ENDPOINT}/models",
-            headers={"Authorization": f"Bearer {AKASH_API_KEY}"},
+            f"{GROQ_API_ENDPOINT}/models",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             timeout=2
         )
         return response.status_code == 200
@@ -162,21 +162,21 @@ def get_fallback_response(query: str) -> str:
 
 
 def get_ai_stream_response(messages: List[Dict]) -> Generator[str, None, None]:
-    """Get streaming response from Akash API"""
-    if not is_akash_available():
+    """Get streaming response from Groq API"""
+    if not is_groq_available():
         yield get_fallback_response("")
         return
 
     try:
         response = requests.post(
-            f"{AKASH_API_ENDPOINT}/chat/completions",
+            f"{GROQ_API_ENDPOINT}/chat/completions",
             headers={
-                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json",
                 "Accept": "text/event-stream"
             },
             json={
-                "model": "gpt-4",
+                "model": GROQ_MODEL,
                 "messages": messages,
                 "stream": True,
                 "temperature": 0.7,
@@ -296,20 +296,20 @@ Your primary duty is to demonstrate the highest standard of medical care. You mu
     return messages
 
 
-def query_akash_chat(messages: List[Dict[str, Any]]) -> str:
-    """Get response from Akash chat API"""
+def query_groq_chat(messages: List[Dict[str, Any]]) -> str:
+    """Get response from Groq chat API"""
     try:
-        if not is_akash_available():
+        if not is_groq_available():
             return get_fallback_response("")
 
         response = requests.post(
-            f"{AKASH_API_ENDPOINT}/chat/completions",
+            f"{GROQ_API_ENDPOINT}/chat/completions",
             headers={
-                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4",
+                "model": GROQ_MODEL,
                 "messages": messages,
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -463,15 +463,15 @@ def extract_text_with_vision_model(file_path: str, file_type: Optional[str], vis
             }
         ]
 
-        # Call Akash API
+        # Call Groq API (vision-capable model)
         response = requests.post(
-            f"{AKASH_API_ENDPOINT}/chat/completions",
+            f"{GROQ_API_ENDPOINT}/chat/completions",
             headers={
-                "Authorization": f"Bearer {AKASH_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4-vision-preview",
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
                 "messages": messages,
                 "max_tokens": 4096,
                 "temperature": 0.1
@@ -480,7 +480,7 @@ def extract_text_with_vision_model(file_path: str, file_type: Optional[str], vis
         )
 
         if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"], "gpt-4-vision"
+            return response.json()["choices"][0]["message"]["content"], "groq-vision"
         else:
             return f"Failed to extract text: API responded with code {response.status_code}", "vision_failed"
 

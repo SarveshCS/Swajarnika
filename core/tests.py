@@ -47,7 +47,8 @@ class DoctorPatientFlowTests(TestCase):
         )
 
         self.patient_user = User.objects.create_user(
-            username='9999999999',
+            username='pat@example.com',
+            email='pat@example.com',
             password='patientpw123',
             is_patient=True,
         )
@@ -55,6 +56,7 @@ class DoctorPatientFlowTests(TestCase):
             user=self.patient_user,
             doctor=self.doctor,
             name='Pat Test',
+            email='pat@example.com',
             date_of_birth=date(2000, 1, 1),
             gender='M',
             phone='9999999999',
@@ -67,7 +69,7 @@ class DoctorPatientFlowTests(TestCase):
         self.assertContains(resp, 'Pat Test')
 
     def test_patient_can_reach_dashboard(self):
-        self.client.login(username='9999999999', password='patientpw123')
+        self.client.login(username='pat@example.com', password='patientpw123')
         resp = self.client.get(reverse('patient_dashboard'))
         self.assertEqual(resp.status_code, 200)
 

@@ -1,5 +1,10 @@
 # AI / Developer context — Swajarnika
 
+> ⚠️ **ARCHIVED — historical context only.** This file reflects the codebase *before*
+> the April 2026 rehab. Newer behaviour (email-based auth, Groq LLM, revamped UI)
+> is documented in [`auth-refactor.md`](auth-refactor.md) and [`demo-data.md`](demo-data.md).
+> Do not treat the guidance below as current; keep it for background only.
+
 > Read this first when picking up the codebase. Pairs with [`design-doc-fixup.md`](design-doc-fixup.md) and [`tracker-fixup.md`](tracker-fixup.md).
 
 ## What this app is

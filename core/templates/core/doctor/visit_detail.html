@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Visit {{ visit.date_of_visit }} — Swajarnika{% endblock %}
+
+{% block content %}
+<div class="sw-page-head">
+    <div>
+        <h1>Visit — {{ visit.date_of_visit }}</h1>
+        <p class="sw-page-subtitle">Patient: {{ visit.patient.name }}</p>
+    </div>
+    <a href="{% url 'doctor_patient_detail' visit.patient.id %}" class="sw-btn sw-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to patient
+    </a>
+</div>
+
+<div class="sw-card sw-mb-4">
+    <div class="sw-card-header"><span><i class="fas fa-stethoscope"></i> Diagnosis & plan</span></div>
+    <div class="sw-card-body">
+        <p><span class="sw-text-muted">Diagnosis:</span> {{ visit.diagnosis }}</p>
+        <p><span class="sw-text-muted">Treatment:</span> {{ visit.treatment_plan }}</p>
+        {% if visit.notes %}<p><span class="sw-text-muted">Notes:</span> {{ visit.notes }}</p>{% endif %}
+    </div>
+</div>
+
+<div class="sw-grid sw-grid-2">
+    <div class="sw-card">
+        <div class="sw-card-header"><span><i class="fas fa-pills"></i> Medications</span></div>
+        <div class="sw-card-body">
+            {% if medications %}
+                <ul class="sw-stack">
+                    {% for m in medications %}
+                        <li>
+                            <div class="sw-fw-600">{{ m.medication_name }}</div>
+                            <div class="sw-text-sm sw-text-muted">{{ m.instructions }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}<p class="sw-text-muted">None.</p>{% endif %}
+        </div>
+    </div>
+    <div class="sw-card">
+        <div class="sw-card-header"><span><i class="fas fa-vial"></i> Tests</span></div>
+        <div class="sw-card-body">
+            {% if tests %}
+                <ul class="sw-stack">
+                    {% for t in tests %}
+                        <li>
+                            <div class="sw-fw-600">{{ t.test_name }}</div>
+                            <div class="sw-text-sm sw-text-muted">{{ t.reason }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}<p class="sw-text-muted">None.</p>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="sw-card sw-mt-4">
+    <div class="sw-card-header"><span><i class="fas fa-file-medical"></i> Files</span></div>
+    <div class="sw-card-body">
+        {% if files %}
+            <ul class="sw-stack">
+                {% for f in files %}
+                    <li class="sw-flex-between">
+                        <span><i class="fas fa-file"></i> {{ f.file_path.name|filename }}</span>
+                        <a class="sw-btn sw-btn-sm" href="{{ f.file_path.url }}" target="_blank">
+                            <i class="fas fa-download"></i> Open
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}<p class="sw-text-muted">No files attached.</p>{% endif %}
+    </div>
+</div>
+
+<div class="sw-flex-between sw-mt-6">
+    <form method="post" action="{% url 'doctor_visit_delete' visit.id %}"
+          onsubmit="return confirm('Delete this visit?')">
+        {% csrf_token %}
+        <button class="sw-btn sw-btn-danger" type="submit"><i class="fas fa-trash"></i> Delete Visit</button>
+    </form>
+</div>
+{% endblock %}
