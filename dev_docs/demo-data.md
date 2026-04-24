@@ -1,4 +1,5 @@
-# Demo data — sample doctors, patients, visits
+﻿<!-- markdownlint-disable -->
+# Demo data â€” sample doctors, patients, visits
 
 **Status**: Active reference. Use this when preparing a demo or presentation.
 **Last updated**: 2026-04-23
@@ -11,7 +12,7 @@
 
 ## How to use this file
 
-1. Make sure the DB is empty-ish — only the superuser should remain
+1. Make sure the DB is empty-ish â€” only the superuser should remain
    (see `auth-refactor.md` for the cleanup script).
 2. Register the three doctors below via `/doctor/register/`.
 3. Log in as each doctor and either register-via-portal or use **Add Patient**
@@ -19,7 +20,7 @@
 4. For each patient, create the visits under **New Visit**, using the diagnosis,
    medications, tests and notes exactly as scripted. This gives the AI chat
    assistant enough grounded context to answer meaningfully during the demo.
-5. Open each created visit from the doctor's patient page → on the visit detail
+5. Open each created visit from the doctor's patient page â†’ on the visit detail
    screen, fill in the **Result** field (and optionally attach a report file)
    for the tests listed with a `Result` value below. This is how the AI ends up
    with concrete numbers to cite (e.g. *"your HbA1c from March was 8.6%"*).
@@ -31,7 +32,7 @@ memorable so you can type them quickly on stage.
 
 ## Doctors
 
-### Dr. Meera Nair — General Medicine
+### Dr. Meera Nair â€” General Medicine
 
 | Field | Value |
 | --- | --- |
@@ -41,7 +42,7 @@ memorable so you can type them quickly on stage.
 | Phone | `+91 98450 11111` |
 | Hospital | *Swajarnika Polyclinic, Bengaluru* |
 
-### Dr. Arjun Menon — Cardiology
+### Dr. Arjun Menon â€” Cardiology
 
 | Field | Value |
 | --- | --- |
@@ -51,7 +52,7 @@ memorable so you can type them quickly on stage.
 | Phone | `+91 98450 22222` |
 | Hospital | *Manipal Heart Centre, Bengaluru* |
 
-### Dr. Priya Iyer — Pediatrics
+### Dr. Priya Iyer â€” Pediatrics
 
 | Field | Value |
 | --- | --- |
@@ -65,7 +66,7 @@ memorable so you can type them quickly on stage.
 
 ## Patients
 
-### 1. Rahul Deshpande — under Dr. Meera Nair
+### 1. Rahul Deshpande â€” under Dr. Meera Nair
 
 | Field | Value |
 | --- | --- |
@@ -77,10 +78,10 @@ memorable so you can type them quickly on stage.
 | Address | *2B, HSR Layout, Bengaluru* |
 | Primary doctor | Dr. Meera Nair |
 
-#### Visit 1 — 2026-03-18 (Type 2 Diabetes follow-up)
+#### Visit 1 â€” 2026-03-18 (Type 2 Diabetes follow-up)
 
 - **Diagnosis**: Type 2 Diabetes Mellitus, poorly controlled. HbA1c 8.6%.
-- **Treatment plan**: Titrate oral hypoglycemics; dietary counselling; 30 min brisk walk 5×/week; repeat HbA1c in 12 weeks.
+- **Treatment plan**: Titrate oral hypoglycemics; dietary counselling; 30 min brisk walk 5Ã—/week; repeat HbA1c in 12 weeks.
 - **Notes**: Reports increased thirst and nocturia. BMI 28.4.
 
 **Medications**
@@ -95,13 +96,13 @@ memorable so you can type them quickly on stage.
 
 | Test | Region | Reason | Result (enter on visit page) |
 | --- | --- | --- | --- |
-| HbA1c | Blood | Recheck glycemic control in 12 weeks | `HbA1c 8.6% — above target (goal < 7%).` Optional: attach a scanned lab PDF. |
+| HbA1c | Blood | Recheck glycemic control in 12 weeks | `HbA1c 8.6% â€” above target (goal < 7%).` Optional: attach a scanned lab PDF. |
 | Fasting lipid profile | Blood | Baseline for statin therapy | `Total cholesterol 228, LDL 152, HDL 38, Triglycerides 210 mg/dL.` |
-| Serum creatinine + eGFR | Blood | Monitor renal function on metformin | `Creatinine 0.9 mg/dL, eGFR 94 mL/min/1.73m². Safe to continue metformin.` |
+| Serum creatinine + eGFR | Blood | Monitor renal function on metformin | `Creatinine 0.9 mg/dL, eGFR 94 mL/min/1.73mÂ². Safe to continue metformin.` |
 
 ---
 
-### 2. Anjali Krishnan — under Dr. Meera Nair
+### 2. Anjali Krishnan â€” under Dr. Meera Nair
 
 | Field | Value |
 | --- | --- |
@@ -112,7 +113,7 @@ memorable so you can type them quickly on stage.
 | Phone | `+91 99000 10002` |
 | Primary doctor | Dr. Meera Nair |
 
-#### Visit 1 — 2026-04-02 (Acute pharyngitis)
+#### Visit 1 â€” 2026-04-02 (Acute pharyngitis)
 
 - **Diagnosis**: Acute bacterial pharyngitis. Centor score 3/4.
 - **Treatment plan**: 5-day antibiotic course, symptomatic relief, rest and fluids.
@@ -129,12 +130,12 @@ memorable so you can type them quickly on stage.
 
 | Test | Region | Reason | Result (enter on visit page) |
 | --- | --- | --- | --- |
-| Throat swab culture | Oropharynx | Confirm bacterial etiology | `Group A Streptococcus positive — antibiotic choice confirmed.` |
-| CBC | Blood | Baseline WBC | `WBC 13.4 × 10⁹/L with neutrophilia. Hb 12.8, platelets 245.` |
+| Throat swab culture | Oropharynx | Confirm bacterial etiology | `Group A Streptococcus positive â€” antibiotic choice confirmed.` |
+| CBC | Blood | Baseline WBC | `WBC 13.4 Ã— 10â¹/L with neutrophilia. Hb 12.8, platelets 245.` |
 
 ---
 
-### 3. Sundar Rao — under Dr. Arjun Menon
+### 3. Sundar Rao â€” under Dr. Arjun Menon
 
 | Field | Value |
 | --- | --- |
@@ -146,10 +147,10 @@ memorable so you can type them quickly on stage.
 | Address | *14, Jayanagar 4th Block, Bengaluru* |
 | Primary doctor | Dr. Arjun Menon |
 
-#### Visit 1 — 2026-02-20 (Post-MI review)
+#### Visit 1 â€” 2026-02-20 (Post-MI review)
 
 - **Diagnosis**: Post-MI (anterior wall, 8 weeks ago). LVEF 38%.
-- **Treatment plan**: Continue GDMT, cardiac rehab 2×/week, low-salt DASH diet.
+- **Treatment plan**: Continue GDMT, cardiac rehab 2Ã—/week, low-salt DASH diet.
 - **Notes**: No chest pain. NYHA II. BP 128/82, HR 68.
 
 **Medications**
@@ -168,9 +169,9 @@ memorable so you can type them quickly on stage.
 | --- | --- | --- | --- |
 | 2D Echocardiogram | Heart | Reassess LVEF at 3 months | `LVEF 42% (improved from 38%). Mild anterior wall hypokinesia persists.` Optional: attach echo report PDF. |
 | Lipid profile | Blood | Confirm LDL < 55 mg/dL on high-intensity statin | `Total 142, LDL 58, HDL 44, Triglycerides 118 mg/dL. Close to target.` |
-| LFT + CK | Blood | Statin safety monitoring | `ALT 32, AST 28, CK 118 U/L — all within normal limits. Continue atorvastatin.` |
+| LFT + CK | Blood | Statin safety monitoring | `ALT 32, AST 28, CK 118 U/L â€” all within normal limits. Continue atorvastatin.` |
 
-#### Visit 2 — 2026-04-10 (Follow-up, mild ankle edema)
+#### Visit 2 â€” 2026-04-10 (Follow-up, mild ankle edema)
 
 - **Diagnosis**: Post-MI; mild ankle edema, likely volume-related.
 - **Treatment plan**: Add low-dose diuretic, recheck weight daily, repeat echo in 2 months.
@@ -184,7 +185,7 @@ memorable so you can type them quickly on stage.
 
 ---
 
-### 4. Kavya Sharma — under Dr. Priya Iyer
+### 4. Kavya Sharma â€” under Dr. Priya Iyer
 
 | Field | Value |
 | --- | --- |
@@ -195,9 +196,9 @@ memorable so you can type them quickly on stage.
 | Phone | `+91 99000 30001` |
 | Primary doctor | Dr. Priya Iyer |
 
-#### Visit 1 — 2026-04-05 (Bronchiolitis)
+#### Visit 1 â€” 2026-04-05 (Bronchiolitis)
 
-- **Diagnosis**: Viral bronchiolitis, mild-moderate. SpO₂ 96% on room air.
+- **Diagnosis**: Viral bronchiolitis, mild-moderate. SpOâ‚‚ 96% on room air.
 - **Treatment plan**: Supportive care, saline nasal drops, monitor red-flag signs.
 - **Notes**: 2y 5m old, weight 13 kg. No prior wheezing episodes.
 
@@ -206,13 +207,13 @@ memorable so you can type them quickly on stage.
 | Name | Reason | Instructions | If missed |
 | --- | --- | --- | --- |
 | Paracetamol syrup 250 mg/5 mL | Fever | 5 mL every 6 h as needed | Skip; next dose as scheduled |
-| Saline nasal drops | Nasal congestion | 2 drops each nostril 4×/day | No harm missing; resume |
+| Saline nasal drops | Nasal congestion | 2 drops each nostril 4Ã—/day | No harm missing; resume |
 
-**Tests** — none ordered; clinical diagnosis.
+**Tests** â€” none ordered; clinical diagnosis.
 
 ---
 
-### 5. Mohammad Imran — self-registered, no doctor yet
+### 5. Mohammad Imran â€” self-registered, no doctor yet
 
 | Field | Value |
 | --- | --- |
@@ -221,18 +222,18 @@ memorable so you can type them quickly on stage.
 | DOB | 1992-01-18 |
 | Gender | M |
 | Phone | *(left blank on purpose, to demo optional phone)* |
-| Primary doctor | *(none — will pick later)* |
+| Primary doctor | *(none â€” will pick later)* |
 
 Use this account to demo the **"patient without a doctor"** case: dashboard
 shows the "No doctor assigned yet" badge, visits list is empty.
 
 ---
 
-## Demo script — suggested flow (≈ 6 minutes)
+## Demo script â€” suggested flow (â‰ˆ 6 minutes)
 
-1. Log in as **Dr. Arjun Menon** (cardiologist). Open Sundar Rao → show the
+1. Log in as **Dr. Arjun Menon** (cardiologist). Open Sundar Rao â†’ show the
    two-visit history, full medication stack, and the recently added diuretic.
-   Open visit **2026-02-20** → enter the echo / lipid / LFT results listed
+   Open visit **2026-02-20** â†’ enter the echo / lipid / LFT results listed
    above so the patient and AI see concrete numbers.
 2. Log out, log in as **patient Sundar Rao**. Open the AI chat and ask:
    - *"What was my last LVEF?"* (grounds the AI in the echo result)
@@ -240,7 +241,7 @@ shows the "No doctor assigned yet" badge, visits list is empty.
    - *"When should I call the doctor about ankle swelling?"*
    - *"What happens if I miss my morning metoprolol?"*
 3. Log out, log in as **patient Mohammad Imran** to show a fresh, empty
-   account — highlighting that phone is optional and no doctor is required.
+   account â€” highlighting that phone is optional and no doctor is required.
 4. Log in as **Dr. Meera Nair**, add a new visit for Rahul Deshpande live on
    stage to show the create-visit flow, then open the visit and fill in an
    HbA1c result with an attached PDF to show the result-entry flow.

@@ -1,4 +1,5 @@
-# Auth refactor — email as primary identity
+﻿<!-- markdownlint-disable -->
+# Auth refactor â€” email as primary identity
 
 **Status**: In progress
 **Date**: 2026-04-23
@@ -11,9 +12,9 @@ Make **email** the unique login identifier for both doctors and patients. Phone 
 
 Today:
 - **Doctor** auth uses `email` as `User.username` (already correct).
-- **Patient** auth uses `phone` as `User.username` — inconsistent, forces phone to be mandatory, and breaks if a patient doesn't have one.
+- **Patient** auth uses `phone` as `User.username` â€” inconsistent, forces phone to be mandatory, and breaks if a patient doesn't have one.
 - `Patient.phone` is `unique=True`; `Doctor.phone` is `unique=True`.
-- `Patient.password` field on the model (plain text, legacy) — still present, should remain nullable and unused for auth.
+- `Patient.password` field on the model (plain text, legacy) â€” still present, should remain nullable and unused for auth.
 
 ## Target model
 
@@ -26,25 +27,25 @@ Today:
 ### Doctor
 - Required: `name`, `email` (unique), `password`, `specialization`.
 - Optional: `phone`, `hospital`.
-- `Doctor.phone`: `CharField(max_length=15, blank=True, null=True)` — drop `unique=True`.
+- `Doctor.phone`: `CharField(max_length=15, blank=True, null=True)` â€” drop `unique=True`.
 
 ### Patient
 - Required: `name`, `email` (unique), `password`, `date_of_birth`, `gender`.
 - Optional: `phone`, `address`, `doctor`.
 - `Patient.email`: **new** `EmailField(unique=True)`.
-- `Patient.phone`: `CharField(max_length=15, blank=True, null=True)` — drop `unique=True`.
-- Drop legacy `Patient.password` plaintext field (or keep for back-compat but stop writing). → Decision: **drop** the legacy field in the same migration.
+- `Patient.phone`: `CharField(max_length=15, blank=True, null=True)` â€” drop `unique=True`.
+- Drop legacy `Patient.password` plaintext field (or keep for back-compat but stop writing). â†’ Decision: **drop** the legacy field in the same migration.
 
 ## Changes
 
 ### Models (`core/models.py`)
-1. `Doctor.phone` → `blank=True, null=True`, drop `unique=True`.
+1. `Doctor.phone` â†’ `blank=True, null=True`, drop `unique=True`.
 2. `Patient`: add `email = EmailField(unique=True)`.
-3. `Patient.phone` → `blank=True, null=True`, drop `unique=True`.
-4. `Patient.password` → remove.
+3. `Patient.phone` â†’ `blank=True, null=True`, drop `unique=True`.
+4. `Patient.password` â†’ remove.
 
 ### Migration
-- Because we'll flush the DB afterwards (keeping superuser), a simple `makemigrations` + `migrate` is enough — no data migration needed.
+- Because we'll flush the DB afterwards (keeping superuser), a simple `makemigrations` + `migrate` is enough â€” no data migration needed.
 
 ### Forms / views (`core/template_views.py`)
 - `DoctorRegistrationForm`: `phone` optional, `hospital` optional (already).
@@ -62,14 +63,14 @@ Today:
 ### DB reset
 - After migration & app changes are confirmed working:
   1. Back up superuser info (username, email, password hash).
-  2. `manage.py flush --no-input` — clears *data* but keeps schema; preserves `auth_user` entries? No — `flush` wipes all tables. Instead use a small script: delete all non-superuser users + cascade, delete all Doctor/Patient/Visit/etc rows.
+  2. `manage.py flush --no-input` â€” clears *data* but keeps schema; preserves `auth_user` entries? No â€” `flush` wipes all tables. Instead use a small script: delete all non-superuser users + cascade, delete all Doctor/Patient/Visit/etc rows.
   3. Verify superuser still logs in at `/admin/`.
 
 ## Execution order
 
-1. ✅ Write this doc.
+1. âœ… Write this doc.
 2. Update `core/models.py`.
-3. `makemigrations core` → migration `0005_auth_email_refactor.py`.
+3. `makemigrations core` â†’ migration `0005_auth_email_refactor.py`.
 4. Update forms, views, templates.
 5. `migrate`.
 6. Run `manage.py check` + smoke tests (`core.tests`).

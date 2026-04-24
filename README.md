@@ -1,3 +1,4 @@
+﻿<!-- markdownlint-disable -->
 # Swajarnika
 
 A Django-based healthcare platform that connects **doctors** and **patients**, with an AI-powered chat assistant for patients (backed by the Groq LLM API).
@@ -8,10 +9,10 @@ A Django-based healthcare platform that connects **doctors** and **patients**, w
 
 ## Features
 
-- **Doctor portal** — register, log in, manage patients, create visits, prescribe medications, order tests, upload files.
-- **Patient portal** — log in, view visits / medications / tests / files, chat with an AI assistant that has full medical-record context.
-- **AI chat** — streams responses from an LLM, grounded in the patient's records and uploaded PDFs.
-- **Admin** — Django admin at `/admin/` for full data management.
+- **Doctor portal** â€” register, log in, manage patients, create visits, prescribe medications, order tests, upload files.
+- **Patient portal** â€” log in, view visits / medications / tests / files, chat with an AI assistant that has full medical-record context.
+- **AI chat** â€” streams responses from an LLM, grounded in the patient's records and uploaded PDFs.
+- **Admin** â€” Django admin at `/admin/` for full data management.
 
 ## Tech stack
 
@@ -26,26 +27,26 @@ A Django-based healthcare platform that connects **doctors** and **patients**, w
 
 ```
 Swajarnika/
-├── manage.py
-├── requirements.txt
-├── .env                        # local env vars (not committed)
-├── db.sqlite3                  # dev database
-├── healthcare_platform/        # Django project (settings, root urls, wsgi/asgi)
-├── core/                       # main app
-│   ├── models.py               # User, Doctor, Patient, Visit, Test, Medication, FileUpload, AIPrompt, AIChatMessage
-│   ├── views.py                # DRF API views
-│   ├── template_views.py       # HTML page views
-│   ├── urls.py                 # DRF API routes
-│   ├── template_urls.py        # HTML routes (and re-declares API routes — to be fixed)
-│   ├── serializers.py
-│   ├── utils.py                # Groq API client, patient context builder, PDF extraction
-│   ├── admin.py
-│   ├── templates/core/         # HTML templates (doctor/, patient/)
-│   ├── static/core/
-│   ├── templatetags/
-│   └── migrations/
-├── media/uploads/              # patient file uploads
-└── dev_docs/                   # internal developer documentation
+â”œâ”€â”€ manage.py
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ .env                        # local env vars (not committed)
+â”œâ”€â”€ db.sqlite3                  # dev database
+â”œâ”€â”€ healthcare_platform/        # Django project (settings, root urls, wsgi/asgi)
+â”œâ”€â”€ core/                       # main app
+â”‚   â”œâ”€â”€ models.py               # User, Doctor, Patient, Visit, Test, Medication, FileUpload, AIPrompt, AIChatMessage
+â”‚   â”œâ”€â”€ views.py                # DRF API views
+â”‚   â”œâ”€â”€ template_views.py       # HTML page views
+â”‚   â”œâ”€â”€ urls.py                 # DRF API routes
+â”‚   â”œâ”€â”€ template_urls.py        # HTML routes (and re-declares API routes â€” to be fixed)
+â”‚   â”œâ”€â”€ serializers.py
+â”‚   â”œâ”€â”€ utils.py                # Groq API client, patient context builder, PDF extraction
+â”‚   â”œâ”€â”€ admin.py
+â”‚   â”œâ”€â”€ templates/core/         # HTML templates (doctor/, patient/)
+â”‚   â”œâ”€â”€ static/core/
+â”‚   â”œâ”€â”€ templatetags/
+â”‚   â””â”€â”€ migrations/
+â”œâ”€â”€ media/uploads/              # patient file uploads
+â””â”€â”€ dev_docs/                   # internal developer documentation
 ```
 
 ## Quick start (Windows / PowerShell)
@@ -116,4 +117,4 @@ See [`dev_docs/design-doc-fixup.md`](dev_docs/design-doc-fixup.md) for the full 
 
 ## License
 
-College project — no license granted.
+College project â€” no license granted.

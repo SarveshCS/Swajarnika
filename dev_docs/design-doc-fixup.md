@@ -1,10 +1,11 @@
-# Design doc — Codebase fix-up plan
+﻿<!-- markdownlint-disable -->
+# Design doc â€” Codebase fix-up plan
 
-> ⚠️ **ARCHIVED — historical plan, completed.** The phases below were all executed on 2026-04-23.
+> âš ï¸ **ARCHIVED â€” historical plan, completed.** The phases below were all executed on 2026-04-23.
 > See [`tracker-fixup.md`](tracker-fixup.md) for the closed-out tracker, and
 > [`auth-refactor.md`](auth-refactor.md) / [`demo-data.md`](demo-data.md) for current work.
 
-**Status:** Draft · **Owner:** Team · **Created:** 2026-04-23
+**Status:** Draft Â· **Owner:** Team Â· **Created:** 2026-04-23
 
 This doc describes how we will bring the Swajarnika codebase back to a clean, consistent, working state after ~1 year of inactivity. It is the source of truth for *what* we are changing and *why*. The step-by-step execution log lives in [`tracker-fixup.md`](tracker-fixup.md).
 
@@ -78,41 +79,41 @@ After the fix-up:
 
 ```
 Swajarnika/
-├── README.md                       ✅ done
-├── .gitignore                       new
-├── .env.example                     new — documents required vars
-├── .env                             local-only, real secrets
-├── requirements.txt                 includes djangorestframework, python-dotenv
-├── manage.py
-├── db.sqlite3                       fresh / empty
-├── healthcare_platform/
-│   ├── settings.py                  reads from env, no hardcoded secrets
-│   └── urls.py                      unchanged
-├── core/
-│   ├── views.py                     no commented dead code, imports fixed, keys from env
-│   ├── template_views.py            no prints, login url names fixed
-│   ├── serializers.py               single PatientRegisterSerializer
-│   ├── utils.py                     key from env
-│   ├── urls.py                      unchanged
-│   └── template_urls.py             no /api/ re-registration
-└── dev_docs/
-    ├── AI_CONTEXT.md                ✅ done
-    ├── design-doc-fixup.md          ✅ this file
-    └── _tracker_active.md           running log
+â”œâ”€â”€ README.md                       âœ… done
+â”œâ”€â”€ .gitignore                       new
+â”œâ”€â”€ .env.example                     new â€” documents required vars
+â”œâ”€â”€ .env                             local-only, real secrets
+â”œâ”€â”€ requirements.txt                 includes djangorestframework, python-dotenv
+â”œâ”€â”€ manage.py
+â”œâ”€â”€ db.sqlite3                       fresh / empty
+â”œâ”€â”€ healthcare_platform/
+â”‚   â”œâ”€â”€ settings.py                  reads from env, no hardcoded secrets
+â”‚   â””â”€â”€ urls.py                      unchanged
+â”œâ”€â”€ core/
+â”‚   â”œâ”€â”€ views.py                     no commented dead code, imports fixed, keys from env
+â”‚   â”œâ”€â”€ template_views.py            no prints, login url names fixed
+â”‚   â”œâ”€â”€ serializers.py               single PatientRegisterSerializer
+â”‚   â”œâ”€â”€ utils.py                     key from env
+â”‚   â”œâ”€â”€ urls.py                      unchanged
+â”‚   â””â”€â”€ template_urls.py             no /api/ re-registration
+â””â”€â”€ dev_docs/
+    â”œâ”€â”€ AI_CONTEXT.md                âœ… done
+    â”œâ”€â”€ design-doc-fixup.md          âœ… this file
+    â””â”€â”€ _tracker_active.md           running log
 ```
 
-## 5. Plan — phased
+## 5. Plan â€” phased
 
 Each phase ends with a working `python manage.py runserver`.
 
-### Phase 0 — baseline reset  *(executed now on user request)*
+### Phase 0 â€” baseline reset  *(executed now on user request)*
 
-1. Create `README.md` ✅
-2. Create `dev_docs/` with `AI_CONTEXT.md`, `design-doc-fixup.md`, `_tracker_active.md` ✅
+1. Create `README.md` âœ…
+2. Create `dev_docs/` with `AI_CONTEXT.md`, `design-doc-fixup.md`, `_tracker_active.md` âœ…
 3. **Wipe the database** (`manage.py flush`) to remove all previous users, superusers, and records.
 4. User creates a fresh superuser.
 
-### Phase 1 — make it boot correctly
+### Phase 1 â€” make it boot correctly
 
 1. Fix `requirements.txt`: add `djangorestframework`, `python-dotenv`.
 2. Add `rest_framework` to `INSTALLED_APPS`.
@@ -121,7 +122,7 @@ Each phase ends with a working `python manage.py runserver`.
 5. Delete stray root-level `settings.py`.
 6. Verify: `python manage.py check` clean, `runserver` clean.
 
-### Phase 2 — secrets & config hygiene
+### Phase 2 â€” secrets & config hygiene
 
 1. Add `python-dotenv` loader at top of `healthcare_platform/settings.py`.
 2. Move `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` to env.
@@ -129,26 +130,26 @@ Each phase ends with a working `python manage.py runserver`.
 4. Commit a `.env.example` with placeholder values.
 5. Add `.gitignore` (`.env`, `db.sqlite3`, `__pycache__/`, `staticfiles/`, `media/`, `.venv/`).
 
-### Phase 3 — URL & auth consistency
+### Phase 3 â€” URL & auth consistency
 
 1. Remove duplicate `/api/...` routes from `core/template_urls.py`.
 2. Fix `LOGIN_URL` / `patient_required` redirect targets to correct URL names.
 3. Replace `print()` debug in `patient_login` with `logging`.
 
-### Phase 4 — dead code purge + formatting
+### Phase 4 â€” dead code purge + formatting
 
 1. Delete commented-out blocks in `core/views.py`.
 2. Drop empty `.blackboxrules`.
 3. Run `black core/ healthcare_platform/`.
 4. Run `isort` (or equivalent manual tidy).
 
-### Phase 5 — model & serializer polish
+### Phase 5 â€” model & serializer polish
 
 1. Decide: remove `Patient.password` or rename it to `initial_password` and flag it for "display once / clear on first login". Migration path documented.
 2. Make `get_ai_stream_response` either wired up or deleted.
 3. Align `AIPrompt` attribute access in `utils.py` with the actual model field (`prompt`, not `prompt_text`).
 
-### Phase 6 — smoke tests
+### Phase 6 â€” smoke tests
 
 1. Add a minimal `core/tests.py` that:
    - Creates a doctor + patient.
@@ -158,7 +159,7 @@ Each phase ends with a working `python manage.py runserver`.
 
 ## 6. Acceptance criteria
 
-- `git clone` → `pip install -r requirements.txt` → `migrate` → `runserver` works with no edits.
+- `git clone` â†’ `pip install -r requirements.txt` â†’ `migrate` â†’ `runserver` works with no edits.
 - `python manage.py check --deploy` only warns about dev-only items (DEBUG, SECRET_KEY length).
 - No secret strings remain in tracked files (grep for `sk-`, `django-insecure-`).
 - `python manage.py test` passes.
