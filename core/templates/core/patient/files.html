@@ -1,13 +1,17 @@
 {% extends 'core/base.html' %}
 {% load custom_filters %}
+{% load lucide %}
 
 {% block title %}My Files — Swajarnika{% endblock %}
 
 {% block content %}
 <div class="sw-page-head">
-    <h1><i class="fas fa-file-medical" style="color: var(--color-primary);"></i> My Files</h1>
+    <div>
+        <h1>My Files</h1>
+        <p class="sw-page-sub">Reports and documents from your doctor.</p>
+    </div>
     <a href="{% url 'patient_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
@@ -17,7 +21,10 @@
             <div class="sw-card">
                 <div class="sw-card-body">
                     <div class="sw-flex-between sw-mb-3">
-                        <span class="sw-fw-600"><i class="fas fa-file"></i> {{ f.file_path.name|filename }}</span>
+                        <span class="sw-fw-600 sw-flex" style="align-items:center;gap:8px;min-width:0;">
+                            <span class="sw-file-icon" style="width:28px;height:28px;">{% icon "file" size=14 %}</span>
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ f.file_path.name|filename }}</span>
+                        </span>
                         <span class="sw-badge">{{ f.uploaded_at|date:"M j, Y" }}</span>
                     </div>
                     {% if f.description %}
@@ -29,7 +36,7 @@
                 </div>
                 <div class="sw-card-footer">
                     <a class="sw-btn sw-btn-sm" href="{{ f.file_path.url }}" target="_blank">
-                        <i class="fas fa-download"></i> Open
+                        {% icon "external-link" size=14 %}<span>Open</span>
                     </a>
                 </div>
             </div>
@@ -38,7 +45,7 @@
 {% else %}
     <div class="sw-card">
         <div class="sw-empty">
-            <i class="fas fa-folder-open"></i>
+            <span class="sw-empty-icon">{% icon "folder" size=28 %}</span>
             <h3>No files yet</h3>
             <p>Reports and documents uploaded by your doctor will appear here.</p>
         </div>

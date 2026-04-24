@@ -17,6 +17,9 @@ urlpatterns = [
     path('doctor/patient/<int:patient_id>/visit/add/', template_views.doctor_visit_add, name='doctor_visit_add'),
     path('doctor/visit/<int:visit_id>/', template_views.doctor_visit_detail, name='doctor_visit_detail'),
     path('doctor/visit/<int:visit_id>/delete/', template_views.doctor_visit_delete, name='doctor_visit_delete'),
+    path('doctor/visit/<int:visit_id>/file/upload/', template_views.doctor_visit_file_upload, name='doctor_visit_file_upload'),
+    path('doctor/test/<int:test_id>/update/', template_views.doctor_test_update, name='doctor_test_update'),
+    path('doctor/test/<int:test_id>/file/delete/', template_views.doctor_test_result_file_delete, name='doctor_test_result_file_delete'),
     path('doctor/patient/<int:patient_id>/file/upload/', template_views.doctor_file_upload, name='doctor_file_upload'),
     path('doctor/file/<int:file_id>/delete/', template_views.doctor_file_delete, name='doctor_file_delete'),
 
@@ -29,6 +32,10 @@ urlpatterns = [
     path('patient/tests/', template_views.patient_tests, name='patient_tests'),
     path('patient/files/', template_views.patient_files, name='patient_files'),
     path('patient/ai-chat/', template_views.patient_ai_chat, name='patient_ai_chat'),
+    path('patient/ai-chat/new/', template_views.patient_chat_new, name='patient_chat_new'),
+    path('patient/ai-chat/stream/', template_views.patient_chat_stream, name='patient_chat_stream'),
+    path('patient/ai-chat/<int:session_id>/', template_views.patient_ai_chat, name='patient_chat_session'),
+    path('patient/ai-chat/<int:session_id>/delete/', template_views.patient_chat_delete, name='patient_chat_delete'),
 
     # Common URLs
     path('logout/', template_views.logout_view, name='logout'),

@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}Doctor Dashboard — Swajarnika{% endblock %}
 
@@ -6,59 +7,57 @@
 <div class="sw-page-head">
     <div>
         <h1>Welcome back, Dr. {{ user.doctor.name }}</h1>
-        <p class="sw-page-subtitle">Your patients and their latest activity.</p>
+        <p class="sw-page-sub">Your patients and their latest activity.</p>
     </div>
-    <a href="{% url 'doctor_patient_add' %}" class="sw-btn">
-        <i class="fas fa-user-plus"></i> Add Patient
-    </a>
+    <div class="sw-page-head-actions">
+        <a href="{% url 'doctor_patient_add' %}" class="sw-btn">
+            {% icon "user-plus" size=16 %}<span>Add patient</span>
+        </a>
+    </div>
 </div>
 
-<div class="sw-card">
-    <div class="sw-card-header">
-        <span><i class="fas fa-users"></i> My Patients</span>
-        <span class="sw-badge sw-badge-primary">{{ patients|length }} total</span>
+<section class="sw-card">
+    <header class="sw-card-header">
+        <span class="sw-card-head-title">{% icon "users" size=16 %}<span>My patients</span></span>
+        <span class="sw-badge-soft">{{ patients|length }}</span>
+    </header>
+    <div class="sw-card-body">
+        {% if patients %}
+            <div class="sw-stack" style="gap:10px;">
+                {% for p in patients %}
+                    <a href="{% url 'doctor_patient_detail' p.id %}" class="sw-visit-row">
+                        <div class="sw-patient-avatar" style="width:48px;height:48px;border-radius:14px;font-size:18px;">
+                            {{ p.name|slice:":1"|upper }}
+                        </div>
+                        <div class="sw-visit-row-main">
+                            <div class="sw-visit-row-title">{{ p.name }}</div>
+                            <div class="sw-visit-row-sub">
+                                {{ p.gender }} · DOB {{ p.date_of_birth|date:"M j, Y" }}
+                                {% if p.email %} · {{ p.email }}{% endif %}
+                            </div>
+                            <div class="sw-visit-row-chip">
+                                <span class="sw-mini-chip">{% icon "stethoscope" size=10 %} {{ p.visit_count }} visit{{ p.visit_count|pluralize }}</span>
+                                {% if p.last_visit_at %}
+                                    <span class="sw-mini-chip">{% icon "clock" size=10 %} Last {{ p.last_visit_at|date:"M j, Y" }}</span>
+                                {% else %}
+                                    <span class="sw-mini-chip">{% icon "clock" size=10 %} No visits yet</span>
+                                {% endif %}
+                                {% if p.phone %}<span class="sw-mini-chip">{% icon "phone" size=10 %} {{ p.phone }}</span>{% endif %}
+                            </div>
+                        </div>
+                        <span class="sw-visit-row-arrow">{% icon "chevron-right" size=18 %}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="sw-empty sw-empty-compact">
+                <span class="sw-empty-icon">{% icon "users" size=24 %}</span>
+                <p>No patients yet. Add your first patient to get started.</p>
+                <a href="{% url 'doctor_patient_add' %}" class="sw-btn sw-btn-sm sw-mt-3">
+                    {% icon "user-plus" size=14 %}<span>Add patient</span>
+                </a>
+            </div>
+        {% endif %}
     </div>
-
-    {% if patients %}
-        <div style="overflow-x: auto;">
-            <table class="sw-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Gender</th>
-                        <th>DOB</th>
-                        <th class="sw-text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for patient in patients %}
-                        <tr>
-                            <td class="sw-fw-600">{{ patient.name }}</td>
-                            <td>{{ patient.email }}</td>
-                            <td>{{ patient.phone|default:"—" }}</td>
-                            <td>{{ patient.gender }}</td>
-                            <td>{{ patient.date_of_birth }}</td>
-                            <td class="sw-text-right">
-                                <a href="{% url 'doctor_patient_detail' patient.id %}" class="sw-btn sw-btn-sm sw-btn-secondary">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="sw-empty">
-            <i class="fas fa-user-slash"></i>
-            <h3>No patients yet</h3>
-            <p>Add your first patient to get started.</p>
-            <a href="{% url 'doctor_patient_add' %}" class="sw-btn">
-                <i class="fas fa-user-plus"></i> Add Patient
-            </a>
-        </div>
-    {% endif %}
-</div>
+</section>
 {% endblock %}

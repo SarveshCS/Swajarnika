@@ -5,14 +5,14 @@ from django.contrib import messages
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
-from .models import Doctor, Patient, Visit, Test, Medication, FileUpload, AIChatMessage, AIPrompt
+from .models import Doctor, Patient, Visit, Test, Medication, FileUpload, AIChatMessage, AIPrompt, ChatSession
 from django.shortcuts import get_object_or_404
 from django import forms
 import random
 import string
 from django.urls import reverse
 from datetime import datetime
-from .utils import get_patient_context, format_chat_messages, get_ai_stream_response, query_groq_chat, get_detailed_patient_data
+from .utils import get_patient_context, format_chat_messages, get_ai_stream_response, query_groq_chat, get_detailed_patient_data, build_patient_refs
 from functools import wraps
 from django.http import StreamingHttpResponse, JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
@@ -105,9 +105,15 @@ def doctor_login(request):
 
 @doctor_required
 def doctor_dashboard(request):
-    patients = Patient.objects.filter(doctor=request.user.doctor)
+    from django.db.models import Count, Max
+    patients = (
+        Patient.objects.filter(doctor=request.user.doctor)
+        .annotate(visit_count=Count('visit', distinct=True),
+                  last_visit_at=Max('visit__date_of_visit'))
+        .order_by('-last_visit_at', 'name')
+    )
     context = {
-        'patients': patients
+        'patients': patients,
     }
     return render(request, 'core/doctor/dashboard.html', context)
 
@@ -414,16 +420,33 @@ def doctor_patient_add(request):
 
 @doctor_required
 def doctor_patient_detail(request, patient_id):
+    from django.db.models import Count
     patient = get_object_or_404(
         Patient, id=patient_id, doctor=request.user.doctor)
-    visits = Visit.objects.filter(patient=patient).order_by('-date_of_visit')
+    visits = (
+        Visit.objects.filter(patient=patient)
+        .annotate(med_count=Count('medication', distinct=True),
+                  test_count=Count('test', distinct=True),
+                  file_count=Count('fileupload', distinct=True))
+        .order_by('-date_of_visit')
+    )
     files = FileUpload.objects.filter(
         visit__patient=patient).order_by('-uploaded_at')
+
+    stats = {
+        'visits': visits.count(),
+        'meds': Medication.objects.filter(visit__patient=patient).count(),
+        'tests': Test.objects.filter(visit__patient=patient).count(),
+        'files': files.count(),
+    }
+    last_visit = visits.first()
 
     context = {
         'patient': patient,
         'visits': visits,
-        'files': files
+        'files': files,
+        'stats': stats,
+        'last_visit': last_visit,
     }
     return render(request, 'core/doctor/patient_detail.html', context)
 
@@ -553,6 +576,82 @@ def doctor_visit_delete(request, visit_id):
         patient_id = visit.patient.id
         visit.delete()
     return redirect('doctor_patient_detail', patient_id=patient_id)
+
+
+@doctor_required
+def doctor_test_update(request, test_id):
+    test = get_object_or_404(
+        Test, id=test_id, visit__doctor=request.user.doctor)
+
+    if request.method == 'POST':
+        if 'delete_result_file' in request.POST and test.result_file:
+            test.result_file.delete(save=False)
+            test.result_file = None
+
+        result_text = (request.POST.get('result') or '').strip()
+        test.result = result_text or None
+
+        uploaded = request.FILES.get('result_file')
+        if uploaded:
+            if test.result_file:
+                test.result_file.delete(save=False)
+            test.result_file = uploaded
+
+        if test.result or test.result_file:
+            test.result_added_at = timezone.now()
+        else:
+            test.result_added_at = None
+
+        test.save()
+        messages.success(request, f'Result saved for {test.test_name}.')
+
+    return redirect('doctor_visit_detail', visit_id=test.visit.id)
+
+
+@doctor_required
+@require_http_methods(["POST"])
+def doctor_test_result_file_delete(request, test_id):
+    """Delete only the attached result file for a test (keeps text result)."""
+    test = get_object_or_404(
+        Test, id=test_id, visit__doctor=request.user.doctor)
+    if test.result_file:
+        test.result_file.delete(save=False)
+        test.result_file = None
+        if not test.result:
+            test.result_added_at = None
+        test.save()
+        messages.success(request, f'Result file removed for {test.test_name}.')
+    return redirect('doctor_visit_detail', visit_id=test.visit.id)
+
+
+@doctor_required
+def doctor_visit_file_upload(request, visit_id):
+    visit = get_object_or_404(
+        Visit, id=visit_id, doctor=request.user.doctor)
+
+    if request.method == 'POST':
+        uploaded = request.FILES.getlist('files[]') or []
+        single = request.FILES.get('file')
+        if single:
+            uploaded.append(single)
+
+        description = (request.POST.get('description') or '').strip()
+
+        if not uploaded:
+            messages.error(request, 'No file selected.')
+        else:
+            for f in uploaded:
+                FileUpload.objects.create(
+                    visit=visit,
+                    file_path=f,
+                    description=description,
+                )
+            messages.success(
+                request,
+                f'Uploaded {len(uploaded)} file(s) to this visit.'
+            )
+
+    return redirect('doctor_visit_detail', visit_id=visit.id)
 
 
 @doctor_required
@@ -716,9 +815,135 @@ def doctor_file_delete(request, file_id):
 #     except Exception:
 #         return False
 @patient_required
-def patient_ai_chat(request):
-    """
-    Renders the AI chat page for authenticated patients.
-    Make sure the template 'core/patient/ai_chat.html' exists.
-    """
-    return render(request, 'core/patient/ai_chat.html')
+def patient_ai_chat(request, session_id=None):
+    """Render chat page with sidebar of sessions and current conversation."""
+    patient = request.user.patient
+    sessions = list(ChatSession.objects.filter(patient=patient))
+
+    current = None
+    if session_id is not None:
+        current = get_object_or_404(ChatSession, pk=session_id, patient=patient)
+    elif sessions:
+        current = sessions[0]
+
+    chat_messages = []
+    if current is not None:
+        chat_messages = list(current.messages.all())
+
+    refs_map = build_patient_refs(patient)
+
+    return render(request, 'core/patient/ai_chat.html', {
+        'chat_messages': chat_messages,
+        'chat_sessions': sessions,
+        'current_session': current,
+        'refs_map': refs_map,
+    })
+
+
+@patient_required
+@require_http_methods(["POST"])
+def patient_chat_new(request):
+    """Open a fresh chat session. Reuse the latest empty one if present."""
+    from django.db.models import Count
+    patient = request.user.patient
+    empty = (
+        ChatSession.objects.filter(patient=patient)
+        .annotate(msg_count=Count('messages'))
+        .filter(msg_count=0)
+        .order_by('-updated_at')
+        .first()
+    )
+    if empty is not None:
+        return redirect('patient_chat_session', session_id=empty.id)
+    session = ChatSession.objects.create(patient=patient)
+    return redirect('patient_chat_session', session_id=session.id)
+
+
+@patient_required
+@require_http_methods(["POST"])
+def patient_chat_delete(request, session_id):
+    """Delete one chat session (and all its messages)."""
+    session = get_object_or_404(ChatSession, pk=session_id, patient=request.user.patient)
+    session.delete()
+    return redirect('patient_ai_chat')
+
+
+@patient_required
+@require_http_methods(["POST"])
+def patient_chat_stream(request):
+    """Stream an AI reply from Groq. Persists user + assistant turns into a session."""
+    patient = request.user.patient
+
+    try:
+        body = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    user_message = (body.get('message') or '').strip()
+    if not user_message:
+        return JsonResponse({'error': 'Message is required'}, status=400)
+
+    # Resolve (or create) the target session
+    session_id = body.get('session_id')
+    session = None
+    if session_id:
+        try:
+            session = ChatSession.objects.get(pk=int(session_id), patient=patient)
+        except (ChatSession.DoesNotExist, ValueError, TypeError):
+            session = None
+    if session is None:
+        session = ChatSession.objects.create(patient=patient)
+
+    # Set title from first user message if still default
+    if session.title == 'New chat':
+        snippet = user_message[:60].strip()
+        session.title = (snippet + '…') if len(user_message) > 60 else (snippet or 'New chat')
+    session.save()  # bumps updated_at
+
+    AIChatMessage.objects.create(
+        patient=patient, session=session, message=user_message, is_ai=False
+    )
+
+    # Build multi-turn context from the most recent 10 turns in THIS session
+    recent = list(
+        AIChatMessage.objects
+        .filter(session=session)
+        .order_by('-created_at')[:11]
+    )[::-1]
+    if recent and not recent[-1].is_ai:
+        recent = recent[:-1]
+    history = [
+        {"role": "assistant" if m.is_ai else "user", "content": m.message}
+        for m in recent
+    ]
+
+    chat_messages = format_chat_messages(
+        patient, user_message=user_message, history=history
+    )
+
+    def stream():
+        buffer_parts: List[str] = []
+        try:
+            for chunk in get_ai_stream_response(chat_messages):
+                if not chunk:
+                    continue
+                buffer_parts.append(chunk)
+                yield chunk
+        except Exception as exc:  # noqa: BLE001
+            err = f"\n\n[stream error: {exc}]"
+            buffer_parts.append(err)
+            yield err
+        finally:
+            full = ''.join(buffer_parts).strip()
+            if full:
+                AIChatMessage.objects.create(
+                    patient=patient, session=session, message=full, is_ai=True
+                )
+                # Bump updated_at so the session floats to the top
+                ChatSession.objects.filter(pk=session.id).update(updated_at=timezone.now())
+
+    response = StreamingHttpResponse(stream(), content_type='text/plain; charset=utf-8')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    response['X-Chat-Session'] = str(session.id)
+    return response

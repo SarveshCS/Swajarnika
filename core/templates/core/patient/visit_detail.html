@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load custom_filters %}
+{% load lucide %}
 
 {% block title %}Visit {{ visit.date_of_visit }} — Swajarnika{% endblock %}
 
@@ -7,27 +8,29 @@
 <div class="sw-page-head">
     <div>
         <h1>Visit on {{ visit.date_of_visit }}</h1>
-        <p class="sw-page-subtitle">With Dr. {{ visit.doctor.name }}</p>
+        <p class="sw-page-sub">With Dr. {{ visit.doctor.name }}</p>
     </div>
     <a href="{% url 'patient_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
 <div class="sw-card sw-mb-4">
-    <div class="sw-card-header"><span><i class="fas fa-stethoscope"></i> Diagnosis & plan</span></div>
+    <div class="sw-card-header">
+        <span class="sw-flex" style="align-items:center;gap:8px;">{% icon "stethoscope" size=16 %}Diagnosis &amp; plan</span>
+    </div>
     <div class="sw-card-body">
         <p><span class="sw-text-muted">Diagnosis:</span> {{ visit.diagnosis }}</p>
         <p><span class="sw-text-muted">Treatment:</span> {{ visit.treatment_plan }}</p>
-        {% if visit.notes %}
-            <p><span class="sw-text-muted">Notes:</span> {{ visit.notes }}</p>
-        {% endif %}
+        {% if visit.notes %}<p><span class="sw-text-muted">Notes:</span> {{ visit.notes }}</p>{% endif %}
     </div>
 </div>
 
 <div class="sw-grid sw-grid-2">
     <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-pills"></i> Medications</span></div>
+        <div class="sw-card-header">
+            <span class="sw-flex" style="align-items:center;gap:8px;">{% icon "pill" size=16 %}Medications</span>
+        </div>
         <div class="sw-card-body">
             {% if medications %}
                 <ul class="sw-stack">
@@ -45,14 +48,28 @@
     </div>
 
     <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-vial"></i> Tests</span></div>
+        <div class="sw-card-header">
+            <span class="sw-flex" style="align-items:center;gap:8px;">{% icon "flask-conical" size=16 %}Tests</span>
+        </div>
         <div class="sw-card-body">
             {% if tests %}
                 <ul class="sw-stack">
                     {% for t in tests %}
                         <li>
-                            <div class="sw-fw-600">{{ t.test_name }}</div>
-                            <div class="sw-text-sm sw-text-muted">{{ t.reason }}</div>
+                            <div class="sw-fw-600">{{ t.test_name }}{% if t.region %} <span class="sw-text-muted sw-text-sm">· {{ t.region }}</span>{% endif %}</div>
+                            <div class="sw-text-sm sw-text-muted">Reason: {{ t.reason }}</div>
+                            {% if t.result %}
+                                <div class="sw-text-sm sw-mt-1"><strong>Result:</strong> {{ t.result }}</div>
+                            {% elif not t.result_file %}
+                                <div class="sw-text-sm sw-text-muted"><em>Result pending</em></div>
+                            {% endif %}
+                            {% if t.result_file %}
+                                <div class="sw-mt-1">
+                                    <a class="sw-btn sw-btn-sm sw-btn-secondary" href="{{ t.result_file.url }}" target="_blank">
+                                        {% icon "download" size=14 %}<span>{{ t.result_file.name|filename }}</span>
+                                    </a>
+                                </div>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ul>
@@ -64,15 +81,18 @@
 </div>
 
 <div class="sw-card sw-mt-4">
-    <div class="sw-card-header"><span><i class="fas fa-file-medical"></i> Files</span></div>
+    <div class="sw-card-header">
+        <span class="sw-flex" style="align-items:center;gap:8px;">{% icon "folder" size=16 %}Files</span>
+    </div>
     <div class="sw-card-body">
         {% if files %}
-            <ul class="sw-stack">
+            <ul class="sw-file-list">
                 {% for f in files %}
-                    <li class="sw-flex-between">
-                        <span><i class="fas fa-file"></i> {{ f.file_path.name|filename }}</span>
-                        <a class="sw-btn sw-btn-sm" href="{{ f.file_path.url }}" target="_blank">
-                            <i class="fas fa-download"></i> Open
+                    <li>
+                        <span class="sw-file-icon">{% icon "file" size=16 %}</span>
+                        <span class="sw-file-name">{{ f.file_path.name|filename }}</span>
+                        <a class="sw-btn-icon sw-btn-icon-sm" href="{{ f.file_path.url }}" target="_blank" title="Open" aria-label="Open">
+                            {% icon "external-link" size=14 %}
                         </a>
                     </li>
                 {% endfor %}

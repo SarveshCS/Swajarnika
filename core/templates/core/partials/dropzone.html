@@ -1,0 +1,28 @@
+{% load lucide %}{% comment %}
+File dropzone — drag, drop or click to upload.
+Params:
+  name          HTML name for the <input type="file">  (default: files[])
+  multiple      True/False                             (default: True)
+  accept        MIME / extension filter                (default: "")
+  label         Primary label text                     (default: "Drop files here or click to upload")
+  hint          Secondary hint line                    (default: "PDFs, images, or any document up to 10 MB")
+  id            Optional element id                    (default: auto "dz-{{name|slugify}}")
+Requires Lucide template tag loaded in the parent template.
+{% endcomment %}{% with dz_id=id|default:"dz-"|add:name|slugify %}
+<div class="sw-dropzone" data-dropzone id="{{ dz_id }}">
+    <input type="file"
+           name="{{ name|default:'files[]' }}"
+           {% if multiple|default:True %}multiple{% endif %}
+           {% if accept %}accept="{{ accept }}"{% endif %}
+           class="sw-dropzone-input"
+           data-dropzone-input>
+    <div class="sw-dropzone-face" data-dropzone-face>
+        <span class="sw-dropzone-icon">{% icon "upload-cloud" size=26 %}</span>
+        <div class="sw-dropzone-text">
+            <strong>{{ label|default:"Drop files here or click to upload" }}</strong>
+            <span>{{ hint|default:"PDFs, images or any document up to 10 MB" }}</span>
+        </div>
+    </div>
+    <ul class="sw-dropzone-list" data-dropzone-list hidden></ul>
+</div>
+{% endwith %}

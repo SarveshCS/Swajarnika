@@ -1,11 +1,16 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}Patient Registration — Swajarnika{% endblock %}
 
 {% block content %}
 <div class="sw-auth-wrap">
     <div class="sw-auth-card" style="max-width: 560px;">
-        <h2><i class="fas fa-user" style="color: var(--color-primary);"></i> Patient Registration</h2>
+        <div class="sw-auth-head">
+            <span class="sw-auth-icon">{% icon "user-round" size=20 %}</span>
+            <h2>Create a patient account</h2>
+            <p class="sw-text-muted">Your medical record, all in one place.</p>
+        </div>
 
         <form method="post" class="sw-form sw-stack">
             {% csrf_token %}

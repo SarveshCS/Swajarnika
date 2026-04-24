@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load lucide %}
 
 {% block title %}Swajarnika — Modern healthcare portal{% endblock %}
 
@@ -8,10 +9,10 @@
     <p>Connecting doctors and patients through a clean, modern healthcare platform.</p>
     <div class="sw-flex-center sw-mt-4 sw-flex-wrap">
         <a href="{% url 'patient_register' %}" class="sw-btn sw-btn-lg">
-            <i class="fas fa-user-plus"></i> Register as Patient
+            {% icon "user-plus" size=18 %}<span>Register as Patient</span>
         </a>
         <a href="{% url 'doctor_register' %}" class="sw-btn sw-btn-lg sw-btn-secondary">
-            <i class="fas fa-user-md"></i> Register as Doctor
+            {% icon "stethoscope" size=18 %}<span>Register as Doctor</span>
         </a>
     </div>
 </section>
@@ -20,21 +21,21 @@
     <div class="sw-grid sw-grid-3">
         <div class="sw-card">
             <div class="sw-card-body">
-                <i class="fas fa-shield-alt" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <span class="sw-feature-icon">{% icon "shield-check" size=22 %}</span>
                 <h3 class="sw-mt-3">Secure Records</h3>
                 <p class="sw-text-muted">Your medical history stays organized, private, and accessible to the right people.</p>
             </div>
         </div>
         <div class="sw-card">
             <div class="sw-card-body">
-                <i class="fas fa-clock" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <span class="sw-feature-icon">{% icon "clock" size=22 %}</span>
                 <h3 class="sw-mt-3">24/7 Access</h3>
                 <p class="sw-text-muted">Review visits, medications, and tests any time from any device.</p>
             </div>
         </div>
         <div class="sw-card">
             <div class="sw-card-body">
-                <i class="fas fa-robot" style="color: var(--color-primary); font-size: 1.8rem;"></i>
+                <span class="sw-feature-icon">{% icon "sparkles" size=22 %}</span>
                 <h3 class="sw-mt-3">AI Assistant</h3>
                 <p class="sw-text-muted">Ask plain-language questions about your records with grounded AI help.</p>
             </div>
@@ -53,15 +54,15 @@
                         medications, tests and documents in one place — patients get a single, clear view
                         of their own history.
                     </p>
-                    <ul class="sw-stack">
-                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Digital prescriptions</li>
-                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Test result tracking</li>
-                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Document library per patient</li>
-                        <li><i class="fas fa-check" style="color: var(--color-success);"></i> Context-aware AI assistant</li>
+                    <ul class="sw-check-list sw-stack">
+                        <li>{% icon "check" size=16 %}<span>Digital prescriptions</span></li>
+                        <li>{% icon "check" size=16 %}<span>Test result tracking</span></li>
+                        <li>{% icon "check" size=16 %}<span>Document library per patient</span></li>
+                        <li>{% icon "check" size=16 %}<span>Context-aware AI assistant</span></li>
                     </ul>
                 </div>
                 <div class="sw-flex-center">
-                    <i class="fas fa-heart-pulse" style="font-size: 8rem; color: var(--color-primary-soft);"></i>
+                    <span class="sw-hero-mark">{% icon "heart-pulse" size=120 stroke_width="1.25" %}</span>
                 </div>
             </div>
         </div>

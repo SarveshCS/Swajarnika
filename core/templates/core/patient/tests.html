@@ -1,12 +1,17 @@
 {% extends 'core/base.html' %}
+{% load custom_filters %}
+{% load lucide %}
 
 {% block title %}My Tests — Swajarnika{% endblock %}
 
 {% block content %}
 <div class="sw-page-head">
-    <h1><i class="fas fa-vial" style="color: var(--color-primary);"></i> My Tests</h1>
+    <div>
+        <h1>My Tests</h1>
+        <p class="sw-page-sub">Lab results and reports from your doctor.</p>
+    </div>
     <a href="{% url 'patient_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
@@ -21,20 +26,34 @@
                         <th>Region</th>
                         <th>Reason</th>
                         <th>Result</th>
+                        <th>Report</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for t in tests %}
-                        <tr>
+                        <tr id="test-{{ t.id }}">
                             <td>{{ t.visit.date_of_visit }}</td>
                             <td class="sw-fw-600">{{ t.test_name }}</td>
                             <td>{{ t.region|default:"—" }}</td>
                             <td>{{ t.reason }}</td>
                             <td>
                                 {% if t.result %}
-                                    <span class="sw-badge sw-badge-success">{{ t.result|truncatechars:40 }}</span>
+                                    <span class="sw-badge sw-badge-success">Done</span>
+                                    <div class="sw-text-sm sw-mt-1">{{ t.result }}</div>
+                                {% elif t.result_file %}
+                                    <span class="sw-badge sw-badge-success">Report uploaded</span>
                                 {% else %}
                                     <span class="sw-badge sw-badge-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.result_file %}
+                                    <a class="sw-btn sw-btn-sm sw-btn-secondary"
+                                       href="{{ t.result_file.url }}" target="_blank">
+                                        {% icon "download" size=14 %}<span>{{ t.result_file.name|filename|truncatechars:24 }}</span>
+                                    </a>
+                                {% else %}
+                                    <span class="sw-text-muted">—</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -46,7 +65,7 @@
 {% else %}
     <div class="sw-card">
         <div class="sw-empty">
-            <i class="fas fa-vial"></i>
+            <span class="sw-empty-icon">{% icon "flask-conical" size=28 %}</span>
             <h3>No tests yet</h3>
             <p>Lab results and tests from your doctor will appear here.</p>
         </div>

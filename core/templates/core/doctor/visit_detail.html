@@ -1,84 +1,217 @@
 {% extends 'core/base.html' %}
 {% load custom_filters %}
+{% load lucide %}
 
 {% block title %}Visit {{ visit.date_of_visit }} — Swajarnika{% endblock %}
 
 {% block content %}
-<div class="sw-page-head">
-    <div>
-        <h1>Visit — {{ visit.date_of_visit }}</h1>
-        <p class="sw-page-subtitle">Patient: {{ visit.patient.name }}</p>
+{# ================= Hero ================= #}
+<div class="sw-visit-hero">
+    <div class="sw-visit-hero-main">
+        <div class="sw-visit-hero-eyebrow">
+            <a href="{% url 'doctor_patient_detail' visit.patient.id %}">
+                {% icon "arrow-left" size=14 %}<span>{{ visit.patient.name }}</span>
+            </a>
+            <span class="sw-dot">·</span>
+            <span>{{ visit.date_of_visit|date:"l, F j, Y" }}</span>
+        </div>
+        <h1 class="sw-visit-hero-title">{{ visit.diagnosis|truncatechars:120 }}</h1>
+        <p class="sw-visit-hero-sub">{{ visit.treatment_plan|truncatechars:180 }}</p>
     </div>
-    <a href="{% url 'doctor_patient_detail' visit.patient.id %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back to patient
-    </a>
+    <div class="sw-visit-hero-actions">
+        <form method="post" action="{% url 'doctor_visit_delete' visit.id %}"
+              data-sw-confirm="This visit and all its medications, tests, and files will be permanently deleted."
+              data-sw-confirm-title="Delete visit"
+              data-sw-confirm-ok="Delete visit"
+              style="margin:0;">
+            {% csrf_token %}
+            <button class="sw-btn sw-btn-secondary" type="submit" title="Delete visit">
+                {% icon "trash-2" size=16 %}<span>Delete</span>
+            </button>
+        </form>
+    </div>
 </div>
 
-<div class="sw-card sw-mb-4">
-    <div class="sw-card-header"><span><i class="fas fa-stethoscope"></i> Diagnosis & plan</span></div>
-    <div class="sw-card-body">
-        <p><span class="sw-text-muted">Diagnosis:</span> {{ visit.diagnosis }}</p>
-        <p><span class="sw-text-muted">Treatment:</span> {{ visit.treatment_plan }}</p>
-        {% if visit.notes %}<p><span class="sw-text-muted">Notes:</span> {{ visit.notes }}</p>{% endif %}
-    </div>
-</div>
+{# ================= Summary + meds ================= #}
+<div class="sw-visit-grid">
+    <section class="sw-card">
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "stethoscope" size=16 %}<span>Summary</span></span>
+        </header>
+        <div class="sw-card-body">
+            <dl class="sw-deflist">
+                <div>
+                    <dt>Diagnosis</dt>
+                    <dd>{{ visit.diagnosis }}</dd>
+                </div>
+                <div>
+                    <dt>Treatment plan</dt>
+                    <dd>{{ visit.treatment_plan }}</dd>
+                </div>
+                {% if visit.notes %}
+                <div>
+                    <dt>Notes</dt>
+                    <dd>{{ visit.notes }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </section>
 
-<div class="sw-grid sw-grid-2">
-    <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-pills"></i> Medications</span></div>
+    <section class="sw-card">
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "pill" size=16 %}<span>Medications</span></span>
+            <span class="sw-badge-soft">{{ medications|length }}</span>
+        </header>
         <div class="sw-card-body">
             {% if medications %}
-                <ul class="sw-stack">
+                <ul class="sw-list-lined">
                     {% for m in medications %}
                         <li>
-                            <div class="sw-fw-600">{{ m.medication_name }}</div>
-                            <div class="sw-text-sm sw-text-muted">{{ m.instructions }}</div>
+                            <span class="sw-list-icon sw-list-icon-med">{% icon "pill" size=14 %}</span>
+                            <div class="sw-list-body">
+                                <div class="sw-list-title">{{ m.medication_name }}</div>
+                                {% if m.reason %}<div class="sw-list-sub">For: {{ m.reason }}</div>{% endif %}
+                                {% if m.instructions %}<div class="sw-list-sub">{{ m.instructions }}</div>{% endif %}
+                                {% if m.missed_dose_instructions %}<div class="sw-list-sub sw-text-xs"><em>If missed:</em> {{ m.missed_dose_instructions }}</div>{% endif %}
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
-            {% else %}<p class="sw-text-muted">None.</p>{% endif %}
+            {% else %}
+                <p class="sw-text-muted sw-mb-0">No medications prescribed in this visit.</p>
+            {% endif %}
         </div>
-    </div>
-    <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-vial"></i> Tests</span></div>
-        <div class="sw-card-body">
-            {% if tests %}
-                <ul class="sw-stack">
-                    {% for t in tests %}
-                        <li>
-                            <div class="sw-fw-600">{{ t.test_name }}</div>
-                            <div class="sw-text-sm sw-text-muted">{{ t.reason }}</div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}<p class="sw-text-muted">None.</p>{% endif %}
-        </div>
-    </div>
+    </section>
 </div>
 
-<div class="sw-card sw-mt-4">
-    <div class="sw-card-header"><span><i class="fas fa-file-medical"></i> Files</span></div>
+{# ================= Tests & results (full width) ================= #}
+<section class="sw-card sw-mt-4">
+    <header class="sw-card-header">
+        <span class="sw-card-head-title">{% icon "flask-conical" size=16 %}<span>Tests &amp; results</span></span>
+        <span class="sw-badge-soft">{{ tests|length }}</span>
+    </header>
+    <div class="sw-card-body">
+        {% if tests %}
+            <div class="sw-test-grid">
+                {% for t in tests %}
+                    <article class="sw-test-card" id="test-{{ t.id }}">
+                        <header class="sw-test-card-head">
+                            <div class="sw-test-card-title">
+                                <span class="sw-list-icon sw-list-icon-test">{% icon "flask-conical" size=14 %}</span>
+                                <div>
+                                    <div class="sw-list-title">{{ t.test_name }}</div>
+                                    <div class="sw-list-sub">
+                                        {% if t.region %}{{ t.region }}{% endif %}
+                                        {% if t.region and t.reason %} · {% endif %}
+                                        {% if t.reason %}{{ t.reason }}{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if t.result %}
+                                <span class="sw-status-chip sw-status-chip-success">{% icon "check" size=12 %}<span>Result recorded</span></span>
+                            {% elif t.result_file %}
+                                <span class="sw-status-chip sw-status-chip-success">{% icon "check" size=12 %}<span>Report attached</span></span>
+                            {% else %}
+                                <span class="sw-status-chip sw-status-chip-warning">{% icon "clock" size=12 %}<span>Pending</span></span>
+                            {% endif %}
+                        </header>
+
+                        {% if t.result_file %}
+                            <div class="sw-existing-file">
+                                <span class="sw-file-icon">{% icon "paperclip" size=14 %}</span>
+                                <a href="{{ t.result_file.url }}" target="_blank" class="sw-file-name">{{ t.result_file.name|filename }}</a>
+                                <form method="post" action="{% url 'doctor_test_result_file_delete' t.id %}" style="margin:0;"
+                                      data-sw-confirm="Delete the attached result file? The text result will be kept."
+                                      data-sw-confirm-title="Delete file"
+                                      data-sw-confirm-ok="Delete file">
+                                    {% csrf_token %}
+                                    <button class="sw-btn-icon sw-btn-icon-sm sw-btn-icon-danger" type="submit" title="Delete file" aria-label="Delete file">
+                                        {% icon "trash-2" size=14 %}
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+
+                        <form method="post" action="{% url 'doctor_test_update' t.id %}" enctype="multipart/form-data" class="sw-test-card-form" data-sw-dirty>
+                            {% csrf_token %}
+
+                            <label class="sw-label-sm">Result</label>
+                            <textarea name="result" class="sw-textarea" rows="2"
+                                      placeholder="e.g. HbA1c 8.6%, LDL 142 mg/dL, WBC 11.2 × 10⁹/L">{{ t.result|default:"" }}</textarea>
+
+                            <label class="sw-label-sm">{% if t.result_file %}Replace file{% else %}Attach report{% endif %}</label>
+                            {% include "core/partials/dropzone.html" with name="result_file" multiple=False accept="application/pdf,image/*" label="Drop file or click to upload" hint="PDF or image — optional" id="result_file_"|add:t.id|stringformat:"s" %}
+
+                            <footer class="sw-test-card-foot">
+                                <span class="sw-text-sm sw-text-muted">
+                                    {% if t.result_added_at %}
+                                        Updated {{ t.result_added_at|date:"M j, Y · H:i" }}
+                                    {% else %}
+                                        Not updated yet
+                                    {% endif %}
+                                </span>
+                                <button class="sw-btn sw-btn-sm" type="submit">
+                                    {% icon "save" size=14 %}<span>Save result</span>
+                                </button>
+                            </footer>
+                        </form>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="sw-empty sw-empty-compact">
+                <span class="sw-empty-icon">{% icon "flask-conical" size=24 %}</span>
+                <p>No tests were ordered in this visit.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{# ================= Files (full width) ================= #}
+<section class="sw-card sw-mt-4">
+    <header class="sw-card-header">
+        <span class="sw-card-head-title">{% icon "folder" size=16 %}<span>Files attached to this visit</span></span>
+        <span class="sw-badge-soft">{{ files|length }}</span>
+    </header>
     <div class="sw-card-body">
         {% if files %}
-            <ul class="sw-stack">
+            <ul class="sw-file-list">
                 {% for f in files %}
-                    <li class="sw-flex-between">
-                        <span><i class="fas fa-file"></i> {{ f.file_path.name|filename }}</span>
-                        <a class="sw-btn sw-btn-sm" href="{{ f.file_path.url }}" target="_blank">
-                            <i class="fas fa-download"></i> Open
+                    <li>
+                        <span class="sw-file-icon">{% icon "file" size=16 %}</span>
+                        <span class="sw-file-name">
+                            {{ f.file_path.name|filename }}
+                            {% if f.description %}<span class="sw-text-muted sw-text-sm"> — {{ f.description }}</span>{% endif %}
+                        </span>
+                        <a class="sw-btn-icon sw-btn-icon-sm" href="{{ f.file_path.url }}" target="_blank" title="Open" aria-label="Open">
+                            {% icon "external-link" size=14 %}
                         </a>
+                        <form method="post" action="{% url 'doctor_file_delete' f.id %}" style="margin:0;"
+                              data-sw-confirm="Delete this file permanently?"
+                              data-sw-confirm-title="Delete file"
+                              data-sw-confirm-ok="Delete file">
+                            {% csrf_token %}
+                            <button class="sw-btn-icon sw-btn-icon-sm sw-btn-icon-danger" type="submit" title="Delete" aria-label="Delete">
+                                {% icon "trash-2" size=14 %}
+                            </button>
+                        </form>
                     </li>
                 {% endfor %}
             </ul>
-        {% else %}<p class="sw-text-muted">No files attached.</p>{% endif %}
-    </div>
-</div>
+        {% else %}
+            <p class="sw-text-muted">No files attached yet.</p>
+        {% endif %}
 
-<div class="sw-flex-between sw-mt-6">
-    <form method="post" action="{% url 'doctor_visit_delete' visit.id %}"
-          onsubmit="return confirm('Delete this visit?')">
-        {% csrf_token %}
-        <button class="sw-btn sw-btn-danger" type="submit"><i class="fas fa-trash"></i> Delete Visit</button>
-    </form>
-</div>
+        <form method="post" action="{% url 'doctor_visit_file_upload' visit.id %}" enctype="multipart/form-data" class="sw-mt-4 sw-stack" data-sw-dirty>
+            {% csrf_token %}
+            <label class="sw-label-sm">Upload new file(s)</label>
+            {% include "core/partials/dropzone.html" with name="files[]" multiple=True label="Drop files or click to upload" hint="PDFs, images — any document up to 10 MB" id="visit_files_upload" %}
+            <input type="text" name="description" class="sw-input" placeholder="Description (optional) — e.g. 'HbA1c lab report'">
+            <div>
+                <button class="sw-btn" type="submit">{% icon "upload-cloud" size=16 %}<span>Upload</span></button>
+            </div>
+        </form>
+    </div>
+</section>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}Add Patient — Swajarnika{% endblock %}
 
@@ -6,13 +7,13 @@
 <div class="sw-page-head">
     <h1>Add a new patient</h1>
     <a href="{% url 'doctor_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
 <div class="sw-card">
     <div class="sw-card-body">
-        <form method="post" class="sw-stack">
+        <form method="post" class="sw-stack" data-sw-dirty>
             {% csrf_token %}
 
             <div class="sw-form-group">
@@ -53,14 +54,13 @@
             </div>
 
             <div class="sw-alert sw-alert-warning">
-                <i class="fas fa-info-circle"></i>
-                A random temporary password will be generated and shown once after creation.
-                Share it with the patient securely — they will log in with their email.
+                {% icon "info" size=16 %}
+                <span>A random temporary password will be generated and shown once after creation. Share it with the patient securely — they will log in with their email.</span>
             </div>
 
             <div class="sw-flex-between">
                 <a href="{% url 'doctor_dashboard' %}" class="sw-btn sw-btn-secondary">Cancel</a>
-                <button type="submit" class="sw-btn"><i class="fas fa-user-plus"></i> Create Patient</button>
+                <button type="submit" class="sw-btn">{% icon "user-plus" size=16 %}<span>Create Patient</span></button>
             </div>
         </form>
     </div>

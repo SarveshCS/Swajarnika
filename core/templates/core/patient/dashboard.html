@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}Dashboard — {{ user.patient.name }}{% endblock %}
 
@@ -6,16 +7,16 @@
 <div class="sw-page-head">
     <div>
         <h1>Hello, {{ user.patient.name }}</h1>
-        <p class="sw-page-subtitle">
+        <p class="sw-page-sub">
             {% if user.patient.doctor %}
                 Primary doctor: Dr. {{ user.patient.doctor.name }}
             {% else %}
-                <span class="sw-badge sw-badge-warning"><i class="fas fa-exclamation-triangle"></i> No doctor assigned yet</span>
+                <span class="sw-badge sw-badge-warning">{% icon "triangle-alert" size=12 %}<span>No doctor assigned yet</span></span>
             {% endif %}
         </p>
     </div>
     <a href="{% url 'patient_ai_chat' %}" class="sw-btn">
-        <i class="fas fa-robot"></i> Ask AI
+        {% icon "sparkles" size=16 %}<span>Ask AI</span>
     </a>
 </div>
 
@@ -41,7 +42,9 @@
 </div>
 
 <div class="sw-card">
-    <div class="sw-card-header"><span><i class="fas fa-history"></i> Visit history</span></div>
+    <div class="sw-card-header">
+        <span class="sw-flex" style="align-items:center;gap:8px;">{% icon "clock" size=16 %}Visit history</span>
+    </div>
     {% if visits %}
         <div style="overflow-x: auto;">
             <table class="sw-table">
@@ -61,7 +64,7 @@
                             <td>{{ v.diagnosis|truncatechars:80 }}</td>
                             <td class="sw-text-right">
                                 <a class="sw-btn sw-btn-sm sw-btn-secondary" href="{% url 'patient_visit_detail' v.id %}">
-                                    <i class="fas fa-eye"></i> View
+                                    {% icon "eye" size=14 %}<span>View</span>
                                 </a>
                             </td>
                         </tr>
@@ -71,7 +74,7 @@
         </div>
     {% else %}
         <div class="sw-empty">
-            <i class="fas fa-notes-medical"></i>
+            <span class="sw-empty-icon">{% icon "clock" size=28 %}</span>
             <h3>No visits yet</h3>
             <p>Your visits will appear here once your doctor records one.</p>
         </div>

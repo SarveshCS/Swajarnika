@@ -51,8 +51,6 @@ class Visit(models.Model):
     diagnosis = models.TextField()
     treatment_plan = models.TextField()
     notes = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=[('draft', 'Draft'), ('approved', 'Approved')], default='draft')
-    approved_by = models.ForeignKey(Doctor, related_name='approved_visits', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -64,6 +62,8 @@ class Test(models.Model):
     region = models.CharField(max_length=255, blank=True, null=True)
     reason = models.TextField()
     result = models.TextField(blank=True, null=True)
+    result_file = models.FileField(upload_to='test_results/', blank=True, null=True)
+    result_added_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.test_name
@@ -97,8 +97,28 @@ class AIPrompt(models.Model):
     def __str__(self):
         return f"AI Prompt for {self.patient.name} at {self.created_at}"
 
+class ChatSession(models.Model):
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE, related_name='chat_sessions')
+    title = models.CharField(max_length=120, default='New chat')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.patient.name} — {self.title}"
+
+
 class AIChatMessage(models.Model):
     patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
+    session = models.ForeignKey(
+        ChatSession,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        null=True,
+        blank=True,
+    )
     message = models.TextField()
     is_ai = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

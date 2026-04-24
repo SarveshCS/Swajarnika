@@ -1,112 +1,165 @@
 {% extends 'core/base.html' %}
 {% load custom_filters %}
+{% load lucide %}
 
 {% block title %}{{ patient.name }} — Swajarnika{% endblock %}
 
 {% block content %}
-<div class="sw-page-head">
-    <div>
+{# ================= Patient profile hero ================= #}
+<div class="sw-patient-profile">
+    <div class="sw-patient-avatar">{{ patient.name|slice:":1"|upper }}</div>
+    <div class="sw-patient-meta">
         <h1>{{ patient.name }}</h1>
-        <p class="sw-page-subtitle">
-            {{ patient.gender }} · DOB {{ patient.date_of_birth }} · {{ patient.email }}
+        <p class="sw-patient-sub">
+            <span>{% icon "user" size=12 %} {{ patient.gender }}</span>
+            <span>{% icon "cake" size=12 %} {{ patient.date_of_birth|date:"M j, Y" }}</span>
+            <span>{% icon "mail" size=12 %} {{ patient.email }}</span>
+            {% if patient.phone %}<span>{% icon "phone" size=12 %} {{ patient.phone }}</span>{% endif %}
         </p>
     </div>
-    <div class="sw-flex">
+    <div class="sw-patient-actions">
         <a href="{% url 'doctor_dashboard' %}" class="sw-btn sw-btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back
+            {% icon "arrow-left" size=16 %}<span>Back</span>
         </a>
         <a href="{% url 'doctor_visit_add' patient.id %}" class="sw-btn">
-            <i class="fas fa-plus"></i> New Visit
+            {% icon "plus" size=16 %}<span>New visit</span>
         </a>
     </div>
 </div>
 
-<div class="sw-grid sw-grid-2">
-    <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-id-card"></i> Patient Info</span></div>
-        <div class="sw-card-body">
-            <p><span class="sw-text-muted">Email:</span> {{ patient.email }}</p>
-            <p><span class="sw-text-muted">Phone:</span> {{ patient.phone|default:"—" }}</p>
-            <p><span class="sw-text-muted">Address:</span> {{ patient.address|default:"—" }}</p>
-            <p><span class="sw-text-muted">Registered:</span> {{ patient.created_at|date:"M j, Y" }}</p>
-        </div>
-        <div class="sw-card-footer">
-            <form method="post" action="{% url 'doctor_patient_delete' patient.id %}"
-                  onsubmit="return confirm('Delete this patient and all their data?')">
-                {% csrf_token %}
-                <button type="submit" class="sw-btn sw-btn-sm sw-btn-danger">
-                    <i class="fas fa-trash"></i> Delete Patient
-                </button>
-            </form>
+{# ================= Stat tiles ================= #}
+<div class="sw-stat-row">
+    <div class="sw-stat-tile">
+        <span class="sw-stat-icon">{% icon "stethoscope" size=18 %}</span>
+        <div>
+            <div class="sw-stat-value">{{ stats.visits }}</div>
+            <div class="sw-stat-label">Visits</div>
         </div>
     </div>
-
-    <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-file-medical"></i> Recent Files</span></div>
-        <div class="sw-card-body">
-            {% if files %}
-                <ul class="sw-stack">
-                    {% for f in files|slice:":5" %}
-                        <li class="sw-flex-between">
-                            <span><i class="fas fa-file"></i> {{ f.file_path.name|filename }}</span>
-                            <a class="sw-btn sw-btn-sm sw-btn-secondary" href="{{ f.file_path.url }}" target="_blank">
-                                <i class="fas fa-download"></i>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="sw-text-muted">No files uploaded.</p>
-            {% endif %}
+    <div class="sw-stat-tile">
+        <span class="sw-stat-icon" style="background: rgba(236,72,153,.12); color: #db2777;">{% icon "pill" size=18 %}</span>
+        <div>
+            <div class="sw-stat-value">{{ stats.meds }}</div>
+            <div class="sw-stat-label">Medications</div>
+        </div>
+    </div>
+    <div class="sw-stat-tile">
+        <span class="sw-stat-icon" style="background: rgba(16,185,129,.14); color: #059669;">{% icon "flask-conical" size=18 %}</span>
+        <div>
+            <div class="sw-stat-value">{{ stats.tests }}</div>
+            <div class="sw-stat-label">Tests</div>
+        </div>
+    </div>
+    <div class="sw-stat-tile">
+        <span class="sw-stat-icon" style="background: rgba(59,130,246,.12); color: #2563eb;">{% icon "folder" size=18 %}</span>
+        <div>
+            <div class="sw-stat-value">{{ stats.files }}</div>
+            <div class="sw-stat-label">Files</div>
         </div>
     </div>
 </div>
 
-<div class="sw-card sw-mt-6">
-    <div class="sw-card-header">
-        <span><i class="fas fa-stethoscope"></i> Visit History</span>
-        <span class="sw-badge">{{ visits|length }}</span>
-    </div>
-
-    {% if visits %}
-        <div style="overflow-x: auto;">
-            <table class="sw-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Diagnosis</th>
-                        <th>Treatment</th>
-                        <th>Status</th>
-                        <th class="sw-text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+{# ================= Visit timeline + sidebar ================= #}
+<div class="sw-visit-grid">
+    <section class="sw-card">
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "clock" size=16 %}<span>Visit history</span></span>
+            <span class="sw-badge-soft">{{ visits|length }}</span>
+        </header>
+        <div class="sw-card-body">
+            {% if visits %}
+                <div class="sw-stack" style="gap:10px;">
                     {% for v in visits %}
-                        <tr>
-                            <td class="sw-fw-600">{{ v.date_of_visit }}</td>
-                            <td>{{ v.diagnosis|truncatechars:60 }}</td>
-                            <td>{{ v.treatment_plan|truncatechars:60 }}</td>
-                            <td><span class="sw-badge sw-badge-primary">{{ v.status }}</span></td>
-                            <td class="sw-text-right">
-                                <form method="post" action="{% url 'doctor_visit_delete' v.id %}" style="display:inline"
-                                      onsubmit="return confirm('Delete this visit?')">
-                                    {% csrf_token %}
-                                    <button class="sw-btn sw-btn-sm sw-btn-danger" type="submit"><i class="fas fa-trash"></i></button>
-                                </form>
-                            </td>
-                        </tr>
+                        <a href="{% url 'doctor_visit_detail' v.id %}" class="sw-visit-row">
+                            <div class="sw-visit-row-date">
+                                <div class="d">{{ v.date_of_visit|date:"j" }}</div>
+                                <div class="m">{{ v.date_of_visit|date:"M Y" }}</div>
+                            </div>
+                            <div class="sw-visit-row-main">
+                                <div class="sw-visit-row-title">{{ v.diagnosis|truncatechars:80 }}</div>
+                                <div class="sw-visit-row-sub">{{ v.treatment_plan|truncatechars:100 }}</div>
+                                <div class="sw-visit-row-chip">
+                                    {% if v.med_count %}<span class="sw-mini-chip">{% icon "pill" size=10 %} {{ v.med_count }} med{{ v.med_count|pluralize }}</span>{% endif %}
+                                    {% if v.test_count %}<span class="sw-mini-chip">{% icon "flask-conical" size=10 %} {{ v.test_count }} test{{ v.test_count|pluralize }}</span>{% endif %}
+                                    {% if v.file_count %}<span class="sw-mini-chip">{% icon "file" size=10 %} {{ v.file_count }} file{{ v.file_count|pluralize }}</span>{% endif %}
+                                </div>
+                            </div>
+                            <span class="sw-visit-row-arrow">{% icon "chevron-right" size=18 %}</span>
+                        </a>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            {% else %}
+                <div class="sw-empty sw-empty-compact">
+                    <span class="sw-empty-icon">{% icon "stethoscope" size=24 %}</span>
+                    <p>No visits recorded yet.</p>
+                    <a href="{% url 'doctor_visit_add' patient.id %}" class="sw-btn sw-btn-sm sw-mt-3">
+                        {% icon "plus" size=14 %}<span>Add first visit</span>
+                    </a>
+                </div>
+            {% endif %}
         </div>
-    {% else %}
-        <div class="sw-empty">
-            <i class="fas fa-notes-medical"></i>
-            <h3>No visits recorded</h3>
-            <a href="{% url 'doctor_visit_add' patient.id %}" class="sw-btn sw-mt-3">
-                <i class="fas fa-plus"></i> Add First Visit
-            </a>
-        </div>
-    {% endif %}
+    </section>
+
+    <aside class="sw-stack" style="gap:20px;">
+        <section class="sw-card">
+            <header class="sw-card-header">
+                <span class="sw-card-head-title">{% icon "user" size=16 %}<span>Profile</span></span>
+            </header>
+            <div class="sw-card-body">
+                <dl class="sw-deflist">
+                    <div>
+                        <dt>Address</dt>
+                        <dd>{{ patient.address|default:"—" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Registered</dt>
+                        <dd>{{ patient.created_at|date:"M j, Y" }}</dd>
+                    </div>
+                    {% if last_visit %}
+                    <div>
+                        <dt>Last visit</dt>
+                        <dd>{{ last_visit.date_of_visit|date:"M j, Y" }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+            <footer class="sw-card-footer">
+                <form method="post" action="{% url 'doctor_patient_delete' patient.id %}"
+                      data-sw-confirm="This will permanently delete the patient and all their visits, medications, tests, and files."
+                      data-sw-confirm-title="Delete patient"
+                      data-sw-confirm-ok="Delete patient"
+                      style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="sw-btn sw-btn-sm sw-btn-secondary">
+                        {% icon "trash-2" size=14 %}<span>Delete patient</span>
+                    </button>
+                </form>
+            </footer>
+        </section>
+
+        <section class="sw-card">
+            <header class="sw-card-header">
+                <span class="sw-card-head-title">{% icon "folder" size=16 %}<span>Recent files</span></span>
+                <span class="sw-badge-soft">{{ stats.files }}</span>
+            </header>
+            <div class="sw-card-body">
+                {% if files %}
+                    <ul class="sw-file-list">
+                        {% for f in files|slice:":6" %}
+                            <li>
+                                <span class="sw-file-icon">{% icon "file" size=16 %}</span>
+                                <span class="sw-file-name">{{ f.file_path.name|filename }}</span>
+                                <a class="sw-btn-icon sw-btn-icon-sm" href="{{ f.file_path.url }}" target="_blank" title="Open" aria-label="Open">
+                                    {% icon "external-link" size=14 %}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="sw-text-muted sw-mb-0">No files uploaded yet.</p>
+                {% endif %}
+            </div>
+        </section>
+    </aside>
 </div>
 {% endblock %}

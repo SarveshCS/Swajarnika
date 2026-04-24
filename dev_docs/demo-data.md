@@ -19,6 +19,10 @@
 4. For each patient, create the visits under **New Visit**, using the diagnosis,
    medications, tests and notes exactly as scripted. This gives the AI chat
    assistant enough grounded context to answer meaningfully during the demo.
+5. Open each created visit from the doctor's patient page → on the visit detail
+   screen, fill in the **Result** field (and optionally attach a report file)
+   for the tests listed with a `Result` value below. This is how the AI ends up
+   with concrete numbers to cite (e.g. *"your HbA1c from March was 8.6%"*).
 
 Passwords below are obviously not production-grade; they are intentionally
 memorable so you can type them quickly on stage.
@@ -89,11 +93,11 @@ memorable so you can type them quickly on stage.
 
 **Tests**
 
-| Test | Region | Reason |
-| --- | --- | --- |
-| HbA1c | Blood | Recheck glycemic control in 12 weeks |
-| Fasting lipid profile | Blood | Baseline for statin therapy |
-| Serum creatinine + eGFR | Blood | Monitor renal function on metformin |
+| Test | Region | Reason | Result (enter on visit page) |
+| --- | --- | --- | --- |
+| HbA1c | Blood | Recheck glycemic control in 12 weeks | `HbA1c 8.6% — above target (goal < 7%).` Optional: attach a scanned lab PDF. |
+| Fasting lipid profile | Blood | Baseline for statin therapy | `Total cholesterol 228, LDL 152, HDL 38, Triglycerides 210 mg/dL.` |
+| Serum creatinine + eGFR | Blood | Monitor renal function on metformin | `Creatinine 0.9 mg/dL, eGFR 94 mL/min/1.73m². Safe to continue metformin.` |
 
 ---
 
@@ -123,10 +127,10 @@ memorable so you can type them quickly on stage.
 
 **Tests**
 
-| Test | Region | Reason |
-| --- | --- | --- |
-| Throat swab culture | Oropharynx | Confirm bacterial etiology |
-| CBC | Blood | Baseline WBC |
+| Test | Region | Reason | Result (enter on visit page) |
+| --- | --- | --- | --- |
+| Throat swab culture | Oropharynx | Confirm bacterial etiology | `Group A Streptococcus positive — antibiotic choice confirmed.` |
+| CBC | Blood | Baseline WBC | `WBC 13.4 × 10⁹/L with neutrophilia. Hb 12.8, platelets 245.` |
 
 ---
 
@@ -160,11 +164,11 @@ memorable so you can type them quickly on stage.
 
 **Tests**
 
-| Test | Region | Reason |
-| --- | --- | --- |
-| 2D Echocardiogram | Heart | Reassess LVEF at 3 months |
-| Lipid profile | Blood | Confirm LDL < 55 mg/dL on high-intensity statin |
-| LFT + CK | Blood | Statin safety monitoring |
+| Test | Region | Reason | Result (enter on visit page) |
+| --- | --- | --- | --- |
+| 2D Echocardiogram | Heart | Reassess LVEF at 3 months | `LVEF 42% (improved from 38%). Mild anterior wall hypokinesia persists.` Optional: attach echo report PDF. |
+| Lipid profile | Blood | Confirm LDL < 55 mg/dL on high-intensity statin | `Total 142, LDL 58, HDL 44, Triglycerides 118 mg/dL. Close to target.` |
+| LFT + CK | Blood | Statin safety monitoring | `ALT 32, AST 28, CK 118 U/L — all within normal limits. Continue atorvastatin.` |
 
 #### Visit 2 — 2026-04-10 (Follow-up, mild ankle edema)
 
@@ -228,14 +232,18 @@ shows the "No doctor assigned yet" badge, visits list is empty.
 
 1. Log in as **Dr. Arjun Menon** (cardiologist). Open Sundar Rao → show the
    two-visit history, full medication stack, and the recently added diuretic.
+   Open visit **2026-02-20** → enter the echo / lipid / LFT results listed
+   above so the patient and AI see concrete numbers.
 2. Log out, log in as **patient Sundar Rao**. Open the AI chat and ask:
+   - *"What was my last LVEF?"* (grounds the AI in the echo result)
    - *"Can I still take an occasional aspirin for a headache?"*
    - *"When should I call the doctor about ankle swelling?"*
    - *"What happens if I miss my morning metoprolol?"*
 3. Log out, log in as **patient Mohammad Imran** to show a fresh, empty
    account — highlighting that phone is optional and no doctor is required.
 4. Log in as **Dr. Meera Nair**, add a new visit for Rahul Deshpande live on
-   stage to show the create-visit flow.
+   stage to show the create-visit flow, then open the visit and fill in an
+   HbA1c result with an attached PDF to show the result-entry flow.
 
 ---
 

@@ -1,84 +1,807 @@
 {% extends 'core/base.html' %}
 {% load custom_filters %}
 
-{% block title %}AI Assistant — Swajarnika{% endblock %}
+{% block title %}Assistant — Swajarnika{% endblock %}
 
-{% block content %}
-<div class="sw-page-head">
-    <div>
-        <h1><i class="fas fa-robot" style="color: var(--color-primary);"></i> AI Assistant</h1>
-        <p class="sw-page-subtitle">Ask about your records. Replies are grounded in your medical history.</p>
-    </div>
-    <a href="{% url 'patient_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
-</div>
+{% block body_class %}sw-chat-mode{% endblock %}
 
-<div class="sw-chat">
-    <div class="sw-chat-head">
-        <span class="sw-fw-600"><i class="fas fa-heartbeat" style="color: var(--color-primary);"></i> Health assistant</span>
-        <span class="sw-badge sw-badge-success">Online</span>
-    </div>
+{% block footer %}{% endblock %}
 
-    <div class="sw-chat-body" id="chatBody">
-        <div class="sw-chat-msg ai">
-            Hi {{ user.patient.name }}! I can help you understand your visits, medications, tests,
-            and any documents uploaded by your doctor. What would you like to ask?
+{% block main %}
+{# Citation reference map — consumed by JS for streamed replies #}
+{{ refs_map|default:""|json_script:"sw-refs" }}
+
+{# Chat runtime config exposed via data-* attributes (keeps Django tags out of <script>) #}
+<div id="sw-chat-config"
+     data-stream-url="{% url 'patient_chat_stream' %}"
+     data-session-id="{% if current_session %}{{ current_session.id }}{% else %}{% endif %}"
+     data-patient-initial="{{ user.patient.name|slice:':1'|upper }}"
+     hidden></div>
+
+<div class="sw-chat-app" id="chatApp">
+
+    {# ===== Sidebar ===== #}
+    <aside class="sw-chat-sidebar" id="chatSidebar" aria-label="Chat history">
+        <div class="sb-head">
+            <span class="sb-title">Chats</span>
+            <button type="button" class="sw-btn-icon" id="sidebarCloseBtn" aria-label="Collapse sidebar" title="Collapse sidebar">
+                <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="15" y2="12"></line>
+                    <line x1="3" y1="18" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
-    </div>
 
-    <form class="sw-chat-form" id="chatForm">
-        {% csrf_token %}
-        <input type="text" id="chatInput" class="sw-input" placeholder="Type your question..." autocomplete="off" required>
-        <button type="submit" class="sw-btn"><i class="fas fa-paper-plane"></i></button>
-    </form>
+        <form method="post" action="{% url 'patient_chat_new' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="sb-new" style="width:calc(100% - 24px);">
+                <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                </svg>
+                <span>New chat</span>
+            </button>
+        </form>
+
+        <nav class="sb-list">
+            {% if chat_sessions %}
+                {% for s in chat_sessions %}
+                    <div class="sw-session-item {% if current_session and current_session.id == s.id %}active{% endif %}"
+                         data-href="{% url 'patient_chat_session' session_id=s.id %}"
+                         onclick="window.location.href=this.dataset.href">
+                        <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span class="label" title="{{ s.title }}">{{ s.title }}</span>
+                        <form method="post" action="{% url 'patient_chat_delete' session_id=s.id %}"
+                              onclick="event.stopPropagation();" style="margin:0;"
+                              data-sw-confirm="This conversation and all its messages will be permanently deleted."
+                              data-sw-confirm-title="Delete conversation"
+                              data-sw-confirm-ok="Delete">
+                            {% csrf_token %}
+                            <button type="submit" class="delete" aria-label="Delete conversation"
+                                    title="Delete conversation">
+                                <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                                    <path d="M10 11v6"></path>
+                                    <path d="M14 11v6"></path>
+                                    <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="sb-empty">No conversations yet.</div>
+            {% endif %}
+        </nav>
+    </aside>
+
+    {# ===== Main column ===== #}
+    <section class="sw-chat-main">
+
+        <button type="button" class="sw-chat-sidebar-toggle" id="sidebarOpenBtn" aria-label="Open sidebar" title="Open sidebar">
+            <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <div class="sw-chat-scroll" id="chatScroll">
+            <div class="sw-chat-thread" id="chatThread">
+                {% if chat_messages %}
+                    {% for m in chat_messages %}
+                        <div class="sw-chat-row {% if m.is_ai %}ai{% else %}user{% endif %}">
+                            {% if m.is_ai %}
+                                <span class="avatar" aria-hidden="true">
+                                    <svg class="lucide" viewBox="0 0 24 24">
+                                        <path d="M12 3l1.9 4.8L19 10l-5.1 2.2L12 17l-1.9-4.8L5 10l5.1-2.2z"></path>
+                                        <path d="M19 17l.7 1.8L21 20l-1.3.7L19 22l-.7-1.3L17 20l1.3-.7z"></path>
+                                    </svg>
+                                </span>
+                            {% endif %}
+                            <div class="sw-chat-bubble">{% if m.is_ai %}{{ m.message|render_citations:refs_map }}{% else %}{{ m.message }}{% endif %}</div>
+                            {% if not m.is_ai %}
+                                <span class="avatar">{{ user.patient.name|slice:":1"|upper }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sw-chat-empty" id="chatEmpty">
+                        <div class="hero-icon">
+                            <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3l1.9 4.8L19 10l-5.1 2.2L12 17l-1.9-4.8L5 10l5.1-2.2z"></path>
+                                <path d="M19 17l.7 1.8L21 20l-1.3.7L19 22l-.7-1.3L17 20l1.3-.7z"></path>
+                            </svg>
+                        </div>
+                        <h2>Hi {{ user.patient.name|cut:" "|slice:":15" }}</h2>
+                        <p>I can help you understand your visits, medications, tests and any reports your doctor has uploaded. Ask me anything about your record.</p>
+                        <div class="sw-suggestions">
+                            <button type="button" data-suggest="What medications am I currently on?">
+                                <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+                                    <path d="m8.5 8.5 7 7"></path>
+                                </svg>
+                                What medications am I on?
+                            </button>
+                            <button type="button" data-suggest="Summarise my last visit in simple terms.">
+                                <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path>
+                                    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path>
+                                    <circle cx="20" cy="10" r="2"></circle>
+                                </svg>
+                                Summarise my last visit
+                            </button>
+                            <button type="button" data-suggest="What do my latest test results mean?">
+                                <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8 2v7.5L3.5 17a2.5 2.5 0 0 0 2.5 4h12a2.5 2.5 0 0 0 2.5-4L16 9.5V2"></path>
+                                    <path d="M7 2h10"></path>
+                                    <path d="M6.5 14h11"></path>
+                                </svg>
+                                Explain my latest test results
+                            </button>
+                            <button type="button" data-suggest="What warning signs should I watch for?">
+                                <svg class="lucide lucide-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                Warning signs to watch for
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sw-chat-composer">
+            <div class="sw-chat-composer-inner">
+                <form id="chatForm">
+                    {% csrf_token %}
+                    <textarea id="chatInput" rows="1" placeholder="Message your health assistant…" autocomplete="off"></textarea>
+                    <button type="submit" class="send-btn" id="chatSend" aria-label="Send">
+                        <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="12" y1="19" x2="12" y2="5"></line>
+                            <polyline points="5 12 12 5 19 12"></polyline>
+                        </svg>
+                    </button>
+                </form>
+                <p class="sw-chat-disclaimer">Answers are AI-generated from your records. For anything urgent, contact your doctor.</p>
+            </div>
+        </div>
+    </section>
 </div>
+
+{# ===== Reference artifact modal (visits / meds / tests / files) ===== #}
+<div class="sw-artifact-root" id="swArtifact" role="dialog" aria-modal="true" aria-labelledby="swArtifactTitle" aria-hidden="true">
+    <div class="sw-artifact-backdrop" data-artifact-close></div>
+    <div class="sw-artifact-dialog" id="swArtifactDialog">
+        <header class="sw-artifact-head">
+            <span class="sw-artifact-icon" id="swArtifactIcon" aria-hidden="true"></span>
+            <div class="sw-artifact-heading">
+                <strong id="swArtifactTitle">Reference</strong>
+                <span id="swArtifactSub"></span>
+            </div>
+            <button type="button" class="sw-artifact-close" data-artifact-close aria-label="Close">
+                <svg class="lucide" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </header>
+        <div class="sw-artifact-body" id="swArtifactBody"></div>
+        <footer class="sw-artifact-foot" id="swArtifactFoot"></footer>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js" crossorigin="anonymous"></script>
 <script>
 (function () {
-    const form   = document.getElementById('chatForm');
-    const input  = document.getElementById('chatInput');
-    const body   = document.getElementById('chatBody');
-    const csrf   = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    const form        = document.getElementById('chatForm');
+    const input       = document.getElementById('chatInput');
+    const thread      = document.getElementById('chatThread');
+    const scroller    = document.getElementById('chatScroll');
+    const sendBtn     = document.getElementById('chatSend');
+    const app         = document.getElementById('chatApp');
+    const sidebarOpen = document.getElementById('sidebarOpenBtn');
+    const sidebarClose= document.getElementById('sidebarCloseBtn');
+    const csrf        = form.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    function addMsg(text, who) {
-        const el = document.createElement('div');
-        el.className = 'sw-chat-msg ' + who;
-        el.textContent = text;
-        body.appendChild(el);
-        body.scrollTop = body.scrollHeight;
-        return el;
+    // Runtime config read from data-* attributes on #sw-chat-config
+    const cfgEl       = document.getElementById('sw-chat-config');
+    const STREAM_URL  = cfgEl ? (cfgEl.dataset.streamUrl || '') : '';
+    const sidRaw      = cfgEl ? (cfgEl.dataset.sessionId || '') : '';
+    const SESSION_ID  = sidRaw ? parseInt(sidRaw, 10) : null;
+    const patientInit = (cfgEl && cfgEl.dataset.patientInitial) ? cfgEl.dataset.patientInitial : 'U';
+
+    // Citation ref map: { "visit:12": { kind, id, label, subtitle, url, mime } }
+    let REFS = {};
+    try {
+        const refsNode = document.getElementById('sw-refs');
+        if (refsNode) REFS = JSON.parse(refsNode.textContent) || {};
+    } catch (e) { REFS = {}; }
+
+    const CITATION_RE = /\[\[(visit|med|test|file|testfile):(\d+)\]\]/g;
+    // Catches malformed tokens with an empty / non-numeric id so we never
+    // render raw bracket junk like "[[file:]]" to the user.
+    const BROKEN_CITATION_RE = /\[\[(?:visit|med|test|file|testfile):[^\]\s]{0,8}\]\]/g;
+    const BROKEN_MARKER_HTML = '<span class="sw-pill-missing" title="The assistant referenced something but did not provide a valid link.">— reference unavailable</span>';
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const msg = input.value.trim();
-        if (!msg) return;
+    function pillHTML(ref, kindRaw) {
+        const displayKind = (kindRaw === 'testfile' || kindRaw === 'file') ? 'file' : kindRaw;
+        if (!ref) {
+            return '<span class="sw-pill sw-pill-' + displayKind +
+                ' sw-pill-stale" title="Reference no longer available">&mdash;</span>';
+        }
+        const label = escapeHtml(ref.label || 'Reference');
+        const title = escapeHtml((ref.label || '') + (ref.subtitle ? ' — ' + ref.subtitle : ''));
+        const url = escapeHtml(ref.url || '#');
+        const mime = escapeHtml(ref.mime || '');
+        const refKey = escapeHtml(kindRaw + ':' + (ref.id || ''));
+        return '<a href="' + url + '" class="sw-pill sw-pill-' + displayKind +
+            '" title="' + title + '"' +
+            ' data-pill-kind="' + displayKind + '"' +
+            ' data-pill-id="' + escapeHtml(ref.id || '') + '"' +
+            ' data-pill-refkey="' + refKey + '"' +
+            ' data-pill-url="' + url + '"' +
+            ' data-pill-label="' + escapeHtml(ref.label || '') + '"' +
+            ' data-pill-mime="' + mime + '"' +
+            '><span class="sw-pill-icon" aria-hidden="true"></span>' +
+            '<span class="sw-pill-label">' + label + '</span></a>';
+    }
 
-        addMsg(msg, 'user');
-        input.value = '';
-        const pending = addMsg('…thinking', 'ai');
-        pending.classList.add('sw-chat-typing');
+    // Configure marked: GFM (tables, strikethrough, task lists), line breaks.
+    if (window.marked && typeof window.marked.setOptions === 'function') {
+        window.marked.setOptions({ gfm: true, breaks: true });
+    }
+
+    // Allow pill data-attrs to survive sanitization
+    const PURIFY_CONFIG = {
+        ADD_ATTR: [
+            'data-pill-kind', 'data-pill-id', 'data-pill-url',
+            'data-pill-label', 'data-pill-mime', 'data-pill-refkey', 'target'
+        ],
+        FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed'],
+    };
+
+    function renderCitations(text) {
+        // 1. Swap citation tokens for placeholders so markdown / DOMPurify
+        //    can't mangle them.
+        const pills = [];
+        const cited = new Set();
+        let withPlaceholders = String(text).replace(CITATION_RE, function (_m, kind, id) {
+            pills.push({ kind: kind, id: id, ref: REFS[kind + ':' + id] });
+            cited.add(kind + ':' + id);
+            return 'SWPILL' + (pills.length - 1) + 'ENDPILL';
+        });
+
+        // 1b. Scrub malformed tokens like "[[file:]]" to a muted marker.
+        withPlaceholders = withPlaceholders.replace(BROKEN_CITATION_RE, 'SWBROKENPILL');
+
+        // 1c. Auto-link plain filename mentions to a file pill when a ref
+        //     matches exactly and it wasn't already cited.
+        const fileRefs = [];
+        Object.keys(REFS).forEach(function (key) {
+            if (key.indexOf('file:') !== 0 && key.indexOf('testfile:') !== 0) return;
+            const ref = REFS[key];
+            if (!ref || !ref.label || ref.label.length < 4) return;
+            const parts = key.split(':');
+            const kind = parts[0];
+            const id = String(ref.id || parts[1] || '');
+            if (cited.has(kind + ':' + id)) return;
+            fileRefs.push({ label: ref.label, kind: kind, id: id, ref: ref });
+        });
+        fileRefs.sort(function (a, b) { return b.label.length - a.label.length; });
+        fileRefs.forEach(function (fr) {
+            // Escape regex metachars in the filename.
+            const safe = fr.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp('(?<![\\w/\\-])' + safe + '(?![\\w])');
+            if (re.test(withPlaceholders)) {
+                withPlaceholders = withPlaceholders.replace(re, function () {
+                    pills.push({ kind: fr.kind, id: fr.id, ref: fr.ref });
+                    return 'SWPILL' + (pills.length - 1) + 'ENDPILL';
+                });
+            }
+        });
+
+        // 2. Markdown -> HTML. Fallback to escaped text + <br> if marked isn't
+        //    available (CDN blocked, offline, etc).
+        let html;
+        if (window.marked && typeof window.marked.parse === 'function') {
+            try {
+                html = window.marked.parse(withPlaceholders);
+            } catch (e) {
+                html = escapeHtml(withPlaceholders).replace(/\n/g, '<br>');
+            }
+        } else {
+            html = escapeHtml(withPlaceholders).replace(/\n/g, '<br>');
+        }
+
+        // 3. Sanitize.
+        if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+            html = window.DOMPurify.sanitize(html, PURIFY_CONFIG);
+        }
+
+        // 4. Restore pills + broken markers.
+        html = html.replace(/SWPILL(\d+)ENDPILL/g, function (_m, idx) {
+            const p = pills[parseInt(idx, 10)];
+            if (!p) return '';
+            return pillHTML(p.ref, p.kind);
+        });
+        html = html.split('SWBROKENPILL').join(BROKEN_MARKER_HTML);
+
+        return html;
+    }
+
+    // When a pill sits inside a table cell next to a text node containing
+    // the same label (e.g. "Amoxicillin 500 mg" + pill), drop the duplicate
+    // text so the pill stands alone as the cell's primary content.
+    function dedupePillsInTables(root) {
+        if (!root) return;
+        const pills = root.querySelectorAll('td .sw-pill, th .sw-pill');
+        pills.forEach(function (pill) {
+            const cell = pill.closest('td, th');
+            if (!cell) return;
+            const label = (pill.getAttribute('data-pill-label') || pill.textContent || '').trim().toLowerCase();
+            if (!label) return;
+            // Walk cell child nodes, strip text nodes whose trimmed content == or starts-with label.
+            const toRemove = [];
+            cell.childNodes.forEach(function (node) {
+                if (node.nodeType === 3) { // text
+                    const txt = (node.nodeValue || '').trim().toLowerCase();
+                    if (!txt) { toRemove.push(node); return; }
+                    if (txt === label || txt.indexOf(label) === 0 || label.indexOf(txt) === 0) {
+                        toRemove.push(node);
+                    }
+                } else if (node.nodeType === 1 && node !== pill) {
+                    // <br> or wrapper <p> produced by marked for loose cell content.
+                    const tag = node.tagName;
+                    if (tag === 'BR') { toRemove.push(node); return; }
+                    if (tag === 'P' && node.children.length === 0) {
+                        const ptxt = (node.textContent || '').trim().toLowerCase();
+                        if (ptxt === label) toRemove.push(node);
+                    }
+                }
+            });
+            toRemove.forEach(function (n) { n.parentNode && n.parentNode.removeChild(n); });
+            // Mark cell for table-cell-specific styling.
+            cell.classList.add('has-pill');
+        });
+    }
+
+    let streaming   = false;
+    let firstSendOfNewSession = SESSION_ID === null;
+
+    const AI_AVATAR_SVG =
+        '<svg class="lucide" viewBox="0 0 24 24">' +
+        '<path d="M12 3l1.9 4.8L19 10l-5.1 2.2L12 17l-1.9-4.8L5 10l5.1-2.2z"></path>' +
+        '<path d="M19 17l.7 1.8L21 20l-1.3.7L19 22l-.7-1.3L17 20l1.3-.7z"></path>' +
+        '</svg>';
+
+    function scrollToBottom() { scroller.scrollTop = scroller.scrollHeight; }
+
+    function removeEmptyState() {
+        const empty = document.getElementById('chatEmpty');
+        if (empty) empty.remove();
+    }
+
+    function addRow(kind, text) {
+        removeEmptyState();
+        const row = document.createElement('div');
+        row.className = 'sw-chat-row ' + kind;
+
+        if (kind === 'ai') {
+            const av = document.createElement('span');
+            av.className = 'avatar';
+            av.innerHTML = AI_AVATAR_SVG;
+            row.appendChild(av);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'sw-chat-bubble';
+        bubble.textContent = text || '';
+        row.appendChild(bubble);
+
+        if (kind === 'user') {
+            const av = document.createElement('span');
+            av.className = 'avatar';
+            av.textContent = patientInit;
+            row.appendChild(av);
+        }
+
+        thread.appendChild(row);
+        scrollToBottom();
+        return bubble;
+    }
+
+    function makeThinkingBubble() {
+        removeEmptyState();
+        const row = document.createElement('div');
+        row.className = 'sw-chat-row ai';
+        const av = document.createElement('span');
+        av.className = 'avatar';
+        av.innerHTML = AI_AVATAR_SVG;
+        row.appendChild(av);
+
+        const bubble = document.createElement('div');
+        bubble.className = 'sw-chat-bubble';
+        bubble.innerHTML =
+            '<div class="sw-chat-thinking">' +
+            '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+            '</div>';
+        row.appendChild(bubble);
+        thread.appendChild(row);
+        scrollToBottom();
+        return bubble;
+    }
+
+    function autoGrow() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+    }
+    input.addEventListener('input', autoGrow);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.requestSubmit();
+        }
+    });
+
+    document.querySelectorAll('[data-suggest]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            input.value = btn.getAttribute('data-suggest');
+            autoGrow();
+            form.requestSubmit();
+        });
+    });
+
+    async function sendMessage(msg) {
+        if (streaming) return;
+        streaming = true;
+        sendBtn.disabled = true;
+
+        addRow('user', msg);
+        const bubble = makeThinkingBubble();
+
+        let gotFirstToken = false;
+        let buffer = '';
+        let newSessionId = null;
 
         try {
-            const res = await fetch('/api/chat/', {
+            const res = await fetch(STREAM_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrf,
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ message: msg })
+                body: JSON.stringify({ message: msg, session_id: SESSION_ID })
             });
-            const data = await res.json();
-            pending.classList.remove('sw-chat-typing');
-            pending.textContent = data.message || data.error || 'Sorry, I could not process that.';
+
+            if (!res.ok || !res.body) {
+                bubble.textContent = 'Sorry, something went wrong. Please try again.';
+                return;
+            }
+
+            newSessionId = res.headers.get('X-Chat-Session');
+
+            const reader  = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                if (!chunk) continue;
+                if (!gotFirstToken) {
+                    gotFirstToken = true;
+                    bubble.innerHTML = '';
+                }
+                buffer += chunk;
+                bubble.innerHTML = renderCitations(buffer) +
+                    '<span class="sw-chat-cursor"></span>';
+                dedupePillsInTables(bubble);
+                scrollToBottom();
+            }
+
+            const cursor = bubble.querySelector('.sw-chat-cursor');
+            if (cursor) cursor.remove();
+            if (!gotFirstToken) bubble.textContent = 'Sorry, I could not generate a reply.';
         } catch (err) {
-            pending.classList.remove('sw-chat-typing');
-            pending.textContent = 'Network error. Please try again.';
+            bubble.textContent = 'Network error. Please check your connection and try again.';
+        } finally {
+            streaming = false;
+            sendBtn.disabled = false;
+            input.focus();
+
+            // If this was the first message of a brand-new session, refresh
+            // so the new entry shows in the sidebar with its derived title.
+            if (firstSendOfNewSession && newSessionId) {
+                firstSendOfNewSession = false;
+                setTimeout(function () {
+                    window.location.href = '/patient/ai-chat/' + newSessionId + '/';
+                }, 400);
+            }
         }
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+        autoGrow();
+        sendMessage(msg);
+    });
+
+    // Sidebar toggle (desktop: collapse; mobile: slide-in)
+    const isMobile = () => window.matchMedia('(max-width: 860px)').matches;
+    sidebarClose && sidebarClose.addEventListener('click', function () {
+        if (isMobile()) {
+            app.classList.remove('sidebar-open');
+        } else {
+            app.classList.add('sidebar-collapsed');
+        }
+    });
+    sidebarOpen && sidebarOpen.addEventListener('click', function () {
+        if (isMobile()) {
+            app.classList.add('sidebar-open');
+        } else {
+            app.classList.remove('sidebar-collapsed');
+        }
+    });
+    // Close on outside click (mobile)
+    app.addEventListener('click', function (e) {
+        if (!isMobile()) return;
+        if (!app.classList.contains('sidebar-open')) return;
+        const sb = document.getElementById('chatSidebar');
+        if (sb && !sb.contains(e.target) && e.target !== sidebarOpen) {
+            app.classList.remove('sidebar-open');
+        }
+    });
+
+    // ===== Reference artifact modal (visits / meds / tests / files) =====
+    const artifact      = document.getElementById('swArtifact');
+    const artifactDlg   = document.getElementById('swArtifactDialog');
+    const artifactIcon  = document.getElementById('swArtifactIcon');
+    const artifactTitle = document.getElementById('swArtifactTitle');
+    const artifactSub   = document.getElementById('swArtifactSub');
+    const artifactBody  = document.getElementById('swArtifactBody');
+    const artifactFoot  = document.getElementById('swArtifactFoot');
+    let   artifactLastFocus = null;
+    let   artifactHistoryPushed = false;
+
+    const KIND_ICONS = {
+        visit: '<svg class="lucide" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        med:   '<svg class="lucide" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>',
+        test:  '<svg class="lucide" viewBox="0 0 24 24"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>',
+        file:  '<svg class="lucide" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+    };
+
+    function artSection(heading, text) {
+        if (!text) return '';
+        return '<section class="sw-artifact-section"><h4>' + escapeHtml(heading) +
+               '</h4><p>' + escapeHtml(text) + '</p></section>';
+    }
+
+    function artKV(rows) {
+        const items = rows.filter(function (r) { return r[1]; });
+        if (!items.length) return '';
+        return '<section class="sw-artifact-section"><dl class="sw-artifact-kv">' +
+               items.map(function (r) {
+                   return '<dt>' + escapeHtml(r[0]) + '</dt><dd>' + escapeHtml(r[1]) + '</dd>';
+               }).join('') + '</dl></section>';
+    }
+
+    function buildArtifactBody(ref) {
+        if (!ref) {
+            return { html: '<div class="sw-artifact-empty">This reference is no longer available.</div>', embed: false };
+        }
+        const kind = ref.kind;
+
+        if (kind === 'visit') {
+            return {
+                html: [
+                    artKV([
+                        ['Date', ref.date],
+                        ['Doctor', ref.doctor ? 'Dr. ' + ref.doctor : '']
+                    ]),
+                    artSection('Diagnosis', ref.diagnosis),
+                    artSection('Treatment plan', ref.treatment),
+                    artSection('Notes', ref.notes)
+                ].join(''),
+                embed: false
+            };
+        }
+
+        if (kind === 'med') {
+            return {
+                html: [
+                    artKV([
+                        ['Prescribed', ref.visit_date]
+                    ]),
+                    artSection('Reason', ref.reason),
+                    artSection('Instructions', ref.instructions),
+                    artSection('If dose is missed', ref.missed)
+                ].join('') || '<div class="sw-artifact-empty">No additional details recorded.</div>',
+                embed: false
+            };
+        }
+
+        if (kind === 'test') {
+            const resultFileHtml = ref.result_file_url
+                ? '<section class="sw-artifact-section"><h4>Report file</h4>' +
+                  '<p><a href="' + escapeHtml(ref.result_file_url) + '" target="_blank" rel="noopener">' +
+                  escapeHtml(ref.result_file_name || 'Download file') + '</a></p></section>'
+                : '';
+            return {
+                html: [
+                    artKV([
+                        ['Ordered', ref.visit_date],
+                        ['Region', ref.region],
+                        ['Result on', ref.result_at]
+                    ]),
+                    artSection('Reason ordered', ref.reason),
+                    artSection('Result', ref.result),
+                    resultFileHtml
+                ].join('') || '<div class="sw-artifact-empty">No additional details recorded.</div>',
+                embed: false
+            };
+        }
+
+        if (kind === 'file') {
+            const url = ref.url || '';
+            const label = ref.label || 'File';
+            const mime = (ref.mime || '').toLowerCase();
+            const ext = (label.split('.').pop() || '').toLowerCase();
+            const isImage = mime.startsWith('image/') || ['png','jpg','jpeg','gif','webp','svg'].indexOf(ext) !== -1;
+            const isPdf = mime === 'application/pdf' || ext === 'pdf';
+            if (isImage) {
+                return { html: '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(label) + '">', embed: true };
+            }
+            if (isPdf) {
+                return { html: '<iframe src="' + escapeHtml(url) + '" title="' + escapeHtml(label) + '"></iframe>', embed: true };
+            }
+            return {
+                html: '<div class="sw-artifact-empty"><p>Preview not supported for this file type.<br>' +
+                      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener">Open file in a new tab</a></p></div>',
+                embed: true
+            };
+        }
+
+        return { html: '<div class="sw-artifact-empty">Unknown reference type.</div>', embed: false };
+    }
+
+    function buildArtifactFoot(ref) {
+        if (!ref) return '';
+        const url = escapeHtml(ref.url || '#');
+        const openLabel = ref.kind === 'file' ? 'Open in new tab' : 'Open full page';
+        const openAttrs = ref.kind === 'file' ? ' target="_blank" rel="noopener"' : '';
+        return '<button type="button" class="sw-btn-ghost" data-artifact-close>Close</button>' +
+               '<a class="sw-btn" href="' + url + '"' + openAttrs + '>' + openLabel +
+               ' <svg class="lucide" style="width:14px;height:14px;margin-left:4px;vertical-align:-2px" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
+               '</a>';
+    }
+
+    function openArtifact(refKey) {
+        if (!artifact) return;
+        const ref = REFS[refKey];
+        const kind = ref ? ref.kind : (refKey.split(':')[0] || 'file');
+        const displayKind = (kind === 'testfile') ? 'file' : kind;
+
+        artifactIcon.className = 'sw-artifact-icon is-' + displayKind;
+        artifactIcon.innerHTML = KIND_ICONS[displayKind] || KIND_ICONS.file;
+        artifactTitle.textContent = (ref && ref.label) || 'Reference';
+        artifactSub.textContent = (ref && ref.subtitle) || '';
+
+        const built = buildArtifactBody(ref);
+        artifactBody.className = 'sw-artifact-body' + (built.embed ? ' is-embed' : '');
+        artifactBody.innerHTML = built.html;
+        artifactFoot.innerHTML = buildArtifactFoot(ref);
+        artifactDlg.classList.toggle('is-wide', !!built.embed);
+
+        artifactLastFocus = document.activeElement;
+        artifact.setAttribute('data-open', '1');
+        artifact.setAttribute('aria-hidden', 'false');
+
+        // Push history state so browser Back closes the modal first instead of navigating away.
+        try {
+            history.pushState({ swArtifact: true, key: refKey }, '');
+            artifactHistoryPushed = true;
+        } catch (e) { /* ignore */ }
+
+        // Focus the close button for keyboard flow.
+        const closeBtn = artifact.querySelector('.sw-artifact-close');
+        if (closeBtn) closeBtn.focus();
+    }
+
+    function closeArtifact(fromPop) {
+        if (!artifact || artifact.getAttribute('data-open') !== '1') return;
+        artifact.setAttribute('data-open', '0');
+        artifact.setAttribute('aria-hidden', 'true');
+        artifactBody.innerHTML = '';
+        artifactFoot.innerHTML = '';
+        if (artifactLastFocus && typeof artifactLastFocus.focus === 'function') {
+            try { artifactLastFocus.focus(); } catch (e) {}
+        }
+        if (artifactHistoryPushed && !fromPop) {
+            try { history.back(); } catch (e) {}
+        }
+        artifactHistoryPushed = false;
+    }
+
+    if (artifact) {
+        artifact.querySelectorAll('[data-artifact-close]').forEach(function (el) {
+            el.addEventListener('click', function () { closeArtifact(false); });
+        });
+        // Delegate: footer buttons are rebuilt each open, so also listen at root.
+        artifact.addEventListener('click', function (e) {
+            const t = e.target.closest('[data-artifact-close]');
+            if (t) { e.preventDefault(); closeArtifact(false); }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && artifact.getAttribute('data-open') === '1') closeArtifact(false);
+        });
+        window.addEventListener('popstate', function (e) {
+            if (artifact.getAttribute('data-open') === '1') {
+                closeArtifact(true);
+            }
+        });
+    }
+
+    // Delegate pill clicks — open artifact modal for ALL kinds.
+    thread.addEventListener('click', function (e) {
+        const pill = e.target.closest('.sw-pill');
+        if (!pill || pill.classList.contains('sw-pill-stale')) return;
+        // Allow middle-click / ctrl+click to open in new tab.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+        e.preventDefault();
+        const refKey = pill.getAttribute('data-pill-refkey')
+                    || ((pill.getAttribute('data-pill-kind') || '') + ':' + (pill.getAttribute('data-pill-id') || ''));
+        openArtifact(refKey);
+    });
+
+    // ===== Scroll restoration — keep chat position when user goes to a page and hits Back. =====
+    const SCROLL_KEY = 'sw-chat-scroll:' + (SESSION_ID || 'new');
+    function persistScroll() {
+        try { sessionStorage.setItem(SCROLL_KEY, String(scroller.scrollTop)); } catch (e) {}
+    }
+    function restoreScroll() {
+        try {
+            const raw = sessionStorage.getItem(SCROLL_KEY);
+            if (raw !== null) {
+                const val = parseInt(raw, 10);
+                if (!isNaN(val)) scroller.scrollTop = val;
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+    // Debounced persist on scroll.
+    let scrollT = 0;
+    scroller.addEventListener('scroll', function () {
+        clearTimeout(scrollT);
+        scrollT = setTimeout(persistScroll, 120);
+    }, { passive: true });
+    window.addEventListener('pagehide', persistScroll);
+    window.addEventListener('beforeunload', persistScroll);
+
+
+    window.addEventListener('load', function () {
+        input.focus();
+        // Clean up pill/label duplication inside any server-rendered tables.
+        thread.querySelectorAll('.sw-chat-bubble').forEach(function (b) { dedupePillsInTables(b); });
+        if (!restoreScroll()) scrollToBottom();
     });
 })();
 </script>

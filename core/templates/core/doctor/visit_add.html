@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}New Visit — {{ patient.name }}{% endblock %}
 
@@ -6,18 +7,20 @@
 <div class="sw-page-head">
     <div>
         <h1>New visit for {{ patient.name }}</h1>
-        <p class="sw-page-subtitle">Record diagnosis, medications, tests, and files in one form.</p>
+        <p class="sw-page-sub">Record diagnosis, medications, tests, and files in one form.</p>
     </div>
     <a href="{% url 'doctor_patient_detail' patient.id %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
-<form method="post" enctype="multipart/form-data" class="sw-stack">
+<form method="post" enctype="multipart/form-data" class="sw-stack" data-sw-dirty>
     {% csrf_token %}
 
     <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-stethoscope"></i> Visit Details</span></div>
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "stethoscope" size=16 %}<span>Visit details</span></span>
+        </header>
         <div class="sw-card-body sw-stack">
             <div class="sw-form-group">
                 <label class="sw-label">Date of visit</label>
@@ -39,63 +42,79 @@
     </div>
 
     <div class="sw-card">
-        <div class="sw-card-header">
-            <span><i class="fas fa-pills"></i> Medications</span>
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "pill" size=16 %}<span>Medications</span></span>
             <button type="button" class="sw-btn sw-btn-sm sw-btn-secondary" onclick="addMedRow()">
-                <i class="fas fa-plus"></i> Add medication
+                {% icon "plus" size=14 %}<span>Add medication</span>
             </button>
-        </div>
-        <div class="sw-card-body" id="medList">
-            <!-- rows injected here -->
-        </div>
+        </header>
+        <div class="sw-card-body sw-stack" id="medList"></div>
     </div>
 
     <div class="sw-card">
-        <div class="sw-card-header">
-            <span><i class="fas fa-vial"></i> Tests</span>
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "flask-conical" size=16 %}<span>Tests</span></span>
             <button type="button" class="sw-btn sw-btn-sm sw-btn-secondary" onclick="addTestRow()">
-                <i class="fas fa-plus"></i> Add test
+                {% icon "plus" size=14 %}<span>Add test</span>
             </button>
-        </div>
-        <div class="sw-card-body" id="testList">
-            <!-- rows injected here -->
-        </div>
+        </header>
+        <div class="sw-card-body sw-stack" id="testList"></div>
     </div>
 
     <div class="sw-card">
-        <div class="sw-card-header"><span><i class="fas fa-file-upload"></i> Files</span></div>
+        <header class="sw-card-header">
+            <span class="sw-card-head-title">{% icon "upload-cloud" size=16 %}<span>Files</span></span>
+        </header>
         <div class="sw-card-body sw-stack">
             <div class="sw-form-group">
-                <label class="sw-label">Attach files <span class="sw-text-soft">(optional, multiple)</span></label>
-                <input class="sw-input" type="file" name="files[]" multiple>
+                <label class="sw-label">Attach files <span class="sw-text-soft">(optional)</span></label>
+                {% include "core/partials/dropzone.html" with name="files[]" multiple=True label="Drop files here or click to upload" hint="PDFs, images, lab reports — any document up to 10 MB" %}
             </div>
             <div class="sw-form-group">
                 <label class="sw-label">File description</label>
-                <input class="sw-input" type="text" name="file_description">
+                <input class="sw-input" type="text" name="file_description" placeholder="Short note about these files (optional)">
             </div>
         </div>
     </div>
 
     <div class="sw-flex-between">
         <a href="{% url 'doctor_patient_detail' patient.id %}" class="sw-btn sw-btn-secondary">Cancel</a>
-        <button type="submit" class="sw-btn sw-btn-lg"><i class="fas fa-save"></i> Save Visit</button>
+        <button type="submit" class="sw-btn sw-btn-lg">{% icon "save" size=16 %}<span>Save Visit</span></button>
     </div>
 </form>
 
 <template id="medRowTpl">
-    <div class="sw-grid sw-grid-2 sw-mb-3">
-        <input class="sw-input" type="text" name="medication_name[]" placeholder="Medication name">
-        <input class="sw-input" type="text" name="medication_reason[]" placeholder="Reason">
-        <input class="sw-input" type="text" name="medication_instructions[]" placeholder="Instructions">
-        <input class="sw-input" type="text" name="medication_missed_instructions[]" placeholder="If missed dose">
+    <div class="sw-subrow">
+        <div class="sw-subrow-head">
+            <span class="sw-list-icon sw-list-icon-med">{% icon "pill" size=14 %}</span>
+            <span class="sw-subrow-label">Medication</span>
+            <button type="button" class="sw-btn-icon sw-btn-icon-sm sw-btn-icon-danger" data-remove-row title="Remove" aria-label="Remove">
+                {% icon "trash-2" size=12 %}
+            </button>
+        </div>
+        <div class="sw-grid sw-grid-2">
+            <input class="sw-input" type="text" name="medication_name[]" placeholder="Medication name">
+            <input class="sw-input" type="text" name="medication_reason[]" placeholder="Reason">
+            <input class="sw-input" type="text" name="medication_instructions[]" placeholder="Instructions / dose">
+            <input class="sw-input" type="text" name="medication_missed_instructions[]" placeholder="If missed dose">
+        </div>
     </div>
 </template>
 
 <template id="testRowTpl">
-    <div class="sw-grid sw-grid-3 sw-mb-3">
-        <input class="sw-input" type="text" name="test_name[]" placeholder="Test name">
-        <input class="sw-input" type="text" name="test_region[]" placeholder="Region / body part">
-        <input class="sw-input" type="text" name="test_reason[]" placeholder="Reason">
+    <div class="sw-subrow">
+        <div class="sw-subrow-head">
+            <span class="sw-list-icon sw-list-icon-test">{% icon "flask-conical" size=14 %}</span>
+            <span class="sw-subrow-label">Test</span>
+            <button type="button" class="sw-btn-icon sw-btn-icon-sm sw-btn-icon-danger" data-remove-row title="Remove" aria-label="Remove">
+                {% icon "trash-2" size=12 %}
+            </button>
+        </div>
+        <div class="sw-grid sw-grid-3">
+            <input class="sw-input" type="text" name="test_name[]" placeholder="Test name">
+            <input class="sw-input" type="text" name="test_region[]" placeholder="Region / body part">
+            <input class="sw-input" type="text" name="test_reason[]" placeholder="Reason">
+        </div>
     </div>
 </template>
 
@@ -108,7 +127,10 @@
         const tpl = document.getElementById('testRowTpl').content.cloneNode(true);
         document.getElementById('testList').appendChild(tpl);
     }
-    // start with one row each
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove-row]');
+        if (btn) { btn.closest('.sw-subrow')?.remove(); }
+    });
     addMedRow(); addTestRow();
 </script>
 {% endblock %}

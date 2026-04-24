@@ -1,11 +1,16 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}Doctor Login — Swajarnika{% endblock %}
 
 {% block content %}
 <div class="sw-auth-wrap">
     <div class="sw-auth-card">
-        <h2><i class="fas fa-user-md" style="color: var(--color-primary);"></i> Doctor Login</h2>
+        <div class="sw-auth-head">
+            <span class="sw-auth-icon">{% icon "stethoscope" size=20 %}</span>
+            <h2>Doctor login</h2>
+            <p class="sw-text-muted">Sign in to manage your patients.</p>
+        </div>
 
         <form method="post" class="sw-stack">
             {% csrf_token %}

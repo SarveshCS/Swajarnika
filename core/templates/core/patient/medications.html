@@ -1,19 +1,23 @@
 {% extends 'core/base.html' %}
+{% load lucide %}
 
 {% block title %}My Medications — Swajarnika{% endblock %}
 
 {% block content %}
 <div class="sw-page-head">
-    <h1><i class="fas fa-pills" style="color: var(--color-primary);"></i> My Medications</h1>
+    <div>
+        <h1>My Medications</h1>
+        <p class="sw-page-sub">Your current and past prescriptions.</p>
+    </div>
     <a href="{% url 'patient_dashboard' %}" class="sw-btn sw-btn-secondary">
-        <i class="fas fa-arrow-left"></i> Back
+        {% icon "arrow-left" size=16 %}<span>Back</span>
     </a>
 </div>
 
 {% if medications %}
     <div class="sw-stack">
         {% for m in medications %}
-            <div class="sw-card">
+            <div class="sw-card" id="med-{{ m.id }}">
                 <div class="sw-card-header">
                     <span class="sw-fw-600">{{ m.medication_name }}</span>
                     <span class="sw-badge">Visit {{ m.visit.date_of_visit }}</span>
@@ -31,7 +35,7 @@
 {% else %}
     <div class="sw-card">
         <div class="sw-empty">
-            <i class="fas fa-pills"></i>
+            <span class="sw-empty-icon">{% icon "pill" size=28 %}</span>
             <h3>No medications</h3>
             <p>You have no medications prescribed yet.</p>
         </div>

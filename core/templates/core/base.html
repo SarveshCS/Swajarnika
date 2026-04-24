@@ -1,4 +1,5 @@
 {% load static %}
+{% load lucide %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,52 +7,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Swajarnika{% endblock %}</title>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="{% static 'core/css/main.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+    {% block header %}
     <header class="sw-header">
         <div class="sw-container sw-nav">
             <a class="sw-brand" href="/">
-                <img src="{% static 'core/images/logo.svg' %}" alt="" onerror="this.style.display='none'">
+                <span class="sw-brand-mark">{% icon "heart-pulse" size=18 %}</span>
                 <span>Swajarnika</span>
             </a>
 
-            <button class="sw-nav-toggle" type="button" aria-label="Toggle nav"
-                    onclick="document.getElementById('swNavLinks').classList.toggle('open')">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <ul class="sw-nav-links" id="swNavLinks">
-                {% if user.is_authenticated %}
+            {% if user.is_authenticated %}
+                <ul class="sw-nav-links" id="swNavLinks">
                     {% if user.is_doctor %}
-                        <li><a href="{% url 'doctor_dashboard' %}"><i class="fas fa-columns"></i> Dashboard</a></li>
-                        <li><a href="{% url 'doctor_patient_add' %}"><i class="fas fa-user-plus"></i> Add Patient</a></li>
-                        <li><span class="sw-nav-user"><i class="fas fa-user-md"></i> Dr. {{ user.doctor.name }}</span></li>
-                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a href="{% url 'doctor_dashboard' %}">{% icon "layout-dashboard" size=16 %}<span>Dashboard</span></a></li>
+                        <li><a href="{% url 'doctor_patient_add' %}">{% icon "user-plus" size=16 %}<span>Add patient</span></a></li>
                     {% elif user.is_patient %}
-                        <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-columns"></i> Dashboard</a></li>
-                        <li><a href="{% url 'patient_medications' %}"><i class="fas fa-pills"></i> Medications</a></li>
-                        <li><a href="{% url 'patient_tests' %}"><i class="fas fa-vial"></i> Tests</a></li>
-                        <li><a href="{% url 'patient_files' %}"><i class="fas fa-file-medical"></i> Files</a></li>
-                        <li><a href="{% url 'patient_ai_chat' %}"><i class="fas fa-robot"></i> AI Chat</a></li>
-                        <li><span class="sw-nav-user"><i class="fas fa-user"></i> {{ user.patient.name }}</span></li>
-                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                    {% else %}
-                        <li><span class="sw-nav-user"><i class="fas fa-user-shield"></i> {{ user.username }}</span></li>
-                        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a href="{% url 'patient_dashboard' %}">{% icon "layout-dashboard" size=16 %}<span>Dashboard</span></a></li>
+                        <li><a href="{% url 'patient_medications' %}">{% icon "pill" size=16 %}<span>Medications</span></a></li>
+                        <li><a href="{% url 'patient_tests' %}">{% icon "flask-conical" size=16 %}<span>Tests</span></a></li>
+                        <li><a href="{% url 'patient_files' %}">{% icon "folder" size=16 %}<span>Files</span></a></li>
+                        <li><a href="{% url 'patient_ai_chat' %}">{% icon "sparkles" size=16 %}<span>Assistant</span></a></li>
                     {% endif %}
-                {% else %}
-                    <li><a href="{% url 'doctor_login' %}"><i class="fas fa-user-md"></i> Doctor Login</a></li>
-                    <li><a href="{% url 'doctor_register' %}"><i class="fas fa-user-plus"></i> Doctor Register</a></li>
-                    <li><a href="{% url 'patient_login' %}"><i class="fas fa-user"></i> Patient Login</a></li>
-                    <li><a href="{% url 'patient_register' %}"><i class="fas fa-user-plus"></i> Patient Register</a></li>
-                {% endif %}
-            </ul>
+                </ul>
+
+                <div class="sw-flex">
+                    <button class="sw-nav-toggle" type="button" aria-label="Toggle navigation"
+                            onclick="document.getElementById('swNavLinks').classList.toggle('open')">
+                        {% icon "menu" size=18 %}
+                    </button>
+
+                    <div class="sw-nav-user" id="swUserMenu">
+                        <button class="sw-nav-user-btn" type="button"
+                                onclick="document.getElementById('swUserMenu').classList.toggle('open')">
+                            <span class="sw-avatar">
+                                {% if user.is_doctor %}{{ user.doctor.name|slice:":1"|upper }}
+                                {% elif user.is_patient %}{{ user.patient.name|slice:":1"|upper }}
+                                {% else %}{{ user.username|slice:":1"|upper }}{% endif %}
+                            </span>
+                            <span class="sw-nav-user-name">
+                                {% if user.is_doctor %}Dr. {{ user.doctor.name }}
+                                {% elif user.is_patient %}{{ user.patient.name }}
+                                {% else %}{{ user.username }}{% endif %}
+                            </span>
+                            {% icon "chevron-down" size=14 class="sw-text-soft" %}
+                        </button>
+                        <div class="sw-nav-user-menu">
+                            <div class="sw-menu-header">
+                                <div class="name">
+                                    {% if user.is_doctor %}Dr. {{ user.doctor.name }}
+                                    {% elif user.is_patient %}{{ user.patient.name }}
+                                    {% else %}{{ user.username }}{% endif %}
+                                </div>
+                                <div class="role">
+                                    {% if user.is_doctor %}{{ user.doctor.specialization }}
+                                    {% elif user.is_patient %}Patient account
+                                    {% else %}Administrator{% endif %}
+                                </div>
+                            </div>
+                            <a href="{% url 'logout' %}" class="sw-menu-danger">
+                                {% icon "log-out" size=16 %}<span>Sign out</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <nav class="sw-nav-auth">
+                    <a class="ghost" href="{% url 'doctor_login' %}">{% icon "stethoscope" size=16 %}<span>Doctor</span></a>
+                    <a class="ghost" href="{% url 'patient_login' %}">{% icon "user-round" size=16 %}<span>Patient</span></a>
+                    <a class="solid" href="{% url 'doctor_register' %}">Get started</a>
+                </nav>
+            {% endif %}
         </div>
     </header>
+    {% endblock %}
 
+    {% block main %}
     <main class="sw-main">
         <div class="sw-container">
             {% if messages %}
@@ -74,12 +107,25 @@
         </div>
     </main>
 
+    {% block footer %}
     <footer class="sw-footer">
         <div class="sw-container sw-footer-inner">
-            <span>&copy; 2026 Swajarnika — built with care for healthcare.</span>
-            <span class="sw-text-soft">v1.0</span>
+            <span>&copy; 2026 Swajarnika</span>
+            <span class="sw-text-soft">Built for better patient care</span>
         </div>
     </footer>
+    {% endblock %}
+    {% endblock %}
+
+    <script>
+        // Close the user menu when clicking outside
+        document.addEventListener('click', function (e) {
+            var menu = document.getElementById('swUserMenu');
+            if (!menu) return;
+            if (!menu.contains(e.target)) menu.classList.remove('open');
+        });
+    </script>
+    <script src="{% static 'core/js/ui.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
 </body>
